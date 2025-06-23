@@ -3,13 +3,35 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Users, FolderOpen, CheckSquare, FileText, LogOut } from 'lucide-react';
+import { Building2, Users, FolderOpen, CheckSquare, FileText, LogOut, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, userRole, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = () => {
     signOut();
+  };
+
+  const handleNewProject = () => {
+    navigate('/projects/new');
+  };
+
+  const handleViewProjects = () => {
+    navigate('/projects');
+  };
+
+  const handleViewTasks = () => {
+    navigate('/tasks');
+  };
+
+  const handleViewReports = () => {
+    navigate('/reports');
+  };
+
+  const handleInviteTeam = () => {
+    navigate('/team');
   };
 
   const getRoleColor = (role: string) => {
@@ -27,25 +49,29 @@ const Dashboard = () => {
       title: 'Active Projects',
       value: '12',
       icon: FolderOpen,
-      color: 'text-blue-600'
+      color: 'text-blue-600',
+      onClick: handleViewProjects
     },
     {
       title: 'Team Members',
       value: '8',
       icon: Users,
-      color: 'text-green-600'
+      color: 'text-green-600',
+      onClick: handleInviteTeam
     },
     {
       title: 'Pending Tasks',
       value: '24',
       icon: CheckSquare,
-      color: 'text-orange-600'
+      color: 'text-orange-600',
+      onClick: handleViewTasks
     },
     {
       title: 'Reports',
       value: '45',
       icon: FileText,
-      color: 'text-purple-600'
+      color: 'text-purple-600',
+      onClick: handleViewReports
     }
   ];
 
@@ -94,7 +120,7 @@ const Dashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <Card key={index}>
+            <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow" onClick={stat.onClick}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -124,7 +150,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors" onClick={handleViewProjects}>
                     <div>
                       <p className="font-medium text-gray-900">Modern Living Room {i}</p>
                       <p className="text-sm text-gray-500">Updated 2 hours ago</p>
@@ -147,21 +173,21 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="h-20 flex-col">
-                  <FolderOpen className="h-6 w-6 mb-2" />
+                <Button variant="outline" className="h-20 flex-col" onClick={handleNewProject}>
+                  <Plus className="h-6 w-6 mb-2" />
                   New Project
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button variant="outline" className="h-20 flex-col" onClick={handleViewTasks}>
                   <CheckSquare className="h-6 w-6 mb-2" />
-                  Add Task
+                  View Tasks
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button variant="outline" className="h-20 flex-col" onClick={handleViewReports}>
                   <FileText className="h-6 w-6 mb-2" />
-                  Create Report
+                  View Reports
                 </Button>
-                <Button variant="outline" className="h-20 flex-col">
+                <Button variant="outline" className="h-20 flex-col" onClick={handleInviteTeam}>
                   <Users className="h-6 w-6 mb-2" />
-                  Invite Team
+                  Team Management
                 </Button>
               </div>
             </CardContent>
