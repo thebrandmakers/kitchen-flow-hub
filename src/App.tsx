@@ -14,6 +14,8 @@ import NewProject from "./pages/NewProject";
 import Tasks from "./pages/Tasks";
 import Reports from "./pages/Reports";
 import Team from "./pages/Team";
+import KitchenProjects from "./pages/KitchenProjects";
+import KitchenProjectDetail from "./pages/KitchenProjectDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +51,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <NewProject />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/kitchen-projects" 
+              element={
+                <ProtectedRoute>
+                  <KitchenProjects />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/kitchen-projects/:id" 
+              element={
+                <ProtectedRoute>
+                  <KitchenProjectDetail />
                 </ProtectedRoute>
               } 
             />
