@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,10 +23,12 @@ interface Task {
   id: string;
   phase_id: string;
   task_name: string;
-  status: string;
+  status: "todo" | "in_progress" | "done";
   notes?: string;
   due_date?: string;
 }
+
+type TaskStatus = "todo" | "in_progress" | "done";
 
 export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
   const [phases, setPhases] = useState<Phase[]>([]);
@@ -74,7 +75,7 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
     }
   }
 
-  const handleStatusUpdate = async (taskId: string, newStatus: string) => {
+  const handleStatusUpdate = async (taskId: string, newStatus: TaskStatus) => {
     try {
       const { error } = await supabase
         .from("kitchen_project_tasks")
