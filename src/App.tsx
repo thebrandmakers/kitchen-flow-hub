@@ -15,6 +15,7 @@ import Tasks from "./pages/Tasks";
 import Reports from "./pages/Reports";
 import Team from "./pages/Team";
 import KitchenProjects from "./pages/KitchenProjects";
+import NewKitchenProject from "./pages/NewKitchenProject";
 import KitchenProjectDetail from "./pages/KitchenProjectDetail";
 import NotFound from "./pages/NotFound";
 
@@ -59,6 +60,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <KitchenProjects />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/kitchen-projects/new" 
+              element={
+                <ProtectedRoute>
+                  <NewKitchenProject />
                 </ProtectedRoute>
               } 
             />

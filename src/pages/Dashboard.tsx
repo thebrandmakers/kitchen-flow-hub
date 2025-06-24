@@ -15,7 +15,7 @@ const Dashboard = () => {
   };
 
   const handleNewProject = () => {
-    navigate("/projects/new");
+    navigate("/kitchen-projects/new");
   };
 
   const handleViewProjects = () => {
@@ -44,10 +44,33 @@ const Dashboard = () => {
     }
   };
 
+  const [projects, setProjects] = useState<any[]>([]);
+  const [projectCount, setProjectCount] = useState(0);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from("kitchen_projects")
+        .select(`
+          *,
+          kitchen_clients(name, email)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (data) {
+        setProjects(data);
+        setProjectCount(data.length);
+      }
+      if (error) console.error("Error loading projects:", error);
+    };
+    fetchProjects();
+  }, []);
+
   const stats = [
     {
       title: "Active Projects",
-      value: "-",
+      value: projectCount.toString(),
       icon: FolderOpen,
       color: "text-blue-600",
       onClick: handleViewProjects
@@ -74,20 +97,6 @@ const Dashboard = () => {
       onClick: handleViewReports
     }
   ];
-
-  const [projects, setProjects] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      const { data, error } = await supabase
-        .from("kitchen_projects")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (data) setProjects(data);
-      if (error) console.error("Error loading projects:", error);
-    };
-    fetchProjects();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -142,8 +151,8 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Projects</CardTitle>
-              <CardDescription>Your most recently updated projects</CardDescription>
+              <CardTitle>Recent Kitchen Projects</CardTitle>
+              <CardDescription>Your most recently created kitchen projects</CardDescription>
             </CardHeader>
             <CardContent>
               {projects.length === 0 ? (
@@ -153,12 +162,14 @@ const Dashboard = () => {
                   {projects.map((project) => (
                     <div
                       key={project.id}
-                      onClick={() => navigate(`/projects/${project.id}`)}
+                      onClick={() => navigate(`/kitchen-projects/${project.id}`)}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                     >
                       <div>
                         <p className="font-medium text-gray-900">{project.project_reference}</p>
-                        <p className="text-sm text-gray-500">{project.kitchen_shape} | {project.budget_bracket}</p>
+                        <p className="text-sm text-gray-500">
+                          {project.kitchen_clients?.name} | {project.kitchen_shape} | {project.budget_bracket}
+                        </p>
                       </div>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {project.status}
@@ -179,7 +190,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-2 gap-3">
                 <Button variant="outline" className="h-20 flex-col" onClick={handleNewProject}>
                   <Plus className="h-6 w-6 mb-2" />
-                  New Project
+                  New Kitchen Project
                 </Button>
                 <Button variant="outline" className="h-20 flex-col" onClick={handleViewTasks}>
                   <CheckSquare className="h-6 w-6 mb-2" />
