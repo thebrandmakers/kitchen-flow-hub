@@ -57,6 +57,248 @@ export type Database = {
           },
         ]
       }
+      kitchen_clients: {
+        Row: {
+          address: string
+          client_id: string
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          password_hash: string | null
+          phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          client_id: string
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          password_hash?: string | null
+          phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          client_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          password_hash?: string | null
+          phone?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      kitchen_project_files: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          project_id: string | null
+          task_id: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          project_id?: string | null
+          task_id?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_project_files_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_project_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_project_phases: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          phase_name: Database["public"]["Enums"]["project_phase_name"]
+          phase_number: number
+          project_id: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          phase_name: Database["public"]["Enums"]["project_phase_name"]
+          phase_number: number
+          project_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          phase_name?: Database["public"]["Enums"]["project_phase_name"]
+          phase_number?: number
+          project_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_project_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          phase_id: string | null
+          status: Database["public"]["Enums"]["task_status"] | null
+          task_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          task_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          task_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_project_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_project_tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_project_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_projects: {
+        Row: {
+          budget_bracket: Database["public"]["Enums"]["budget_bracket"]
+          client_id: string | null
+          created_at: string | null
+          current_phase: number | null
+          id: string
+          intake_pdf_url: string | null
+          kitchen_shape: Database["public"]["Enums"]["kitchen_shape"]
+          materials: Database["public"]["Enums"]["kitchen_material"][]
+          project_reference: string
+          status: Database["public"]["Enums"]["project_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget_bracket: Database["public"]["Enums"]["budget_bracket"]
+          client_id?: string | null
+          created_at?: string | null
+          current_phase?: number | null
+          id?: string
+          intake_pdf_url?: string | null
+          kitchen_shape: Database["public"]["Enums"]["kitchen_shape"]
+          materials: Database["public"]["Enums"]["kitchen_material"][]
+          project_reference: string
+          status?: Database["public"]["Enums"]["project_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget_bracket?: Database["public"]["Enums"]["budget_bracket"]
+          client_id?: string | null
+          created_at?: string | null
+          current_phase?: number | null
+          id?: string
+          intake_pdf_url?: string | null
+          kitchen_shape?: Database["public"]["Enums"]["kitchen_shape"]
+          materials?: Database["public"]["Enums"]["kitchen_material"][]
+          project_reference?: string
+          status?: Database["public"]["Enums"]["project_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -273,6 +515,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_project_reference: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
@@ -286,7 +532,25 @@ export type Database = {
       }
     }
     Enums: {
+      budget_bracket: "3-5 lakhs" | "5-8 lakhs" | "8-10+ lakhs"
+      kitchen_material: "Plywood" | "MDF" | "HDHMR" | "Acrylic" | "Laminate"
+      kitchen_shape: "L-shape" | "U-shape" | "Parallel" | "Island" | "Straight"
+      project_phase_name:
+        | "design_quotation"
+        | "confirmation_payment"
+        | "production_prep"
+        | "factory_production"
+        | "site_installation"
+        | "closure_feedback"
       project_stage: "quotation" | "design" | "factory" | "site"
+      project_status:
+        | "intake"
+        | "design"
+        | "confirmation"
+        | "production_prep"
+        | "factory"
+        | "installation"
+        | "closure"
       task_status: "todo" | "in_progress" | "done"
       user_role: "owner" | "designer" | "client" | "worker"
     }
@@ -404,7 +668,27 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      budget_bracket: ["3-5 lakhs", "5-8 lakhs", "8-10+ lakhs"],
+      kitchen_material: ["Plywood", "MDF", "HDHMR", "Acrylic", "Laminate"],
+      kitchen_shape: ["L-shape", "U-shape", "Parallel", "Island", "Straight"],
+      project_phase_name: [
+        "design_quotation",
+        "confirmation_payment",
+        "production_prep",
+        "factory_production",
+        "site_installation",
+        "closure_feedback",
+      ],
       project_stage: ["quotation", "design", "factory", "site"],
+      project_status: [
+        "intake",
+        "design",
+        "confirmation",
+        "production_prep",
+        "factory",
+        "installation",
+        "closure",
+      ],
       task_status: ["todo", "in_progress", "done"],
       user_role: ["owner", "designer", "client", "worker"],
     },
