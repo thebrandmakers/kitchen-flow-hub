@@ -27,9 +27,9 @@ const NewKitchenProject = () => {
     materials: [] as string[]
   });
 
-  const kitchenShapes = ['L-shaped', 'U-shaped', 'straight', 'island', 'galley', 'peninsula'];
-  const budgetBrackets = ['under_50k', '50k_100k', '100k_200k', '200k_plus'];
-  const materialOptions = ['wood', 'laminate', 'granite', 'quartz', 'steel', 'marble'];
+  const kitchenShapes = ['L-shape', 'U-shape', 'Parallel', 'Island', 'Straight'];
+  const budgetBrackets = ['3-5 lakhs', '5-8 lakhs', '8-10+ lakhs'];
+  const materialOptions = ['Plywood', 'MDF', 'HDHMR', 'Acrylic', 'Laminate'];
 
   const handleMaterialChange = (material: string, checked: boolean) => {
     if (checked) {
@@ -87,14 +87,24 @@ const NewKitchenProject = () => {
         throw clientError;
       }
 
+      // Generate project reference using the database function
+      const { data: referenceData, error: referenceError } = await supabase
+        .rpc('generate_project_reference');
+
+      if (referenceError) {
+        console.error('Project reference generation error:', referenceError);
+        throw referenceError;
+      }
+
       // Then create the kitchen project
       const { data: projectData, error: projectError } = await supabase
         .from('kitchen_projects')
         .insert({
           client_id: clientData.id,
-          kitchen_shape: formData.kitchenShape,
-          budget_bracket: formData.budgetBracket,
-          materials: formData.materials,
+          kitchen_shape: formData.kitchenShape as "L-shape" | "U-shape" | "Parallel" | "Island" | "Straight",
+          budget_bracket: formData.budgetBracket as "3-5 lakhs" | "5-8 lakhs" | "8-10+ lakhs",
+          materials: formData.materials as ("Plywood" | "MDF" | "HDHMR" | "Acrylic" | "Laminate")[],
+          project_reference: referenceData,
           status: 'intake'
         })
         .select()
@@ -209,7 +219,7 @@ const NewKitchenProject = () => {
                     <SelectContent>
                       {kitchenShapes.map((shape) => (
                         <SelectItem key={shape} value={shape}>
-                          {shape.charAt(0).toUpperCase() + shape.slice(1)}
+                          {shape}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -225,7 +235,7 @@ const NewKitchenProject = () => {
                     <SelectContent>
                       {budgetBrackets.map((bracket) => (
                         <SelectItem key={bracket} value={bracket}>
-                          {bracket.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          {bracket}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -243,7 +253,7 @@ const NewKitchenProject = () => {
                           onCheckedChange={(checked) => handleMaterialChange(material, checked as boolean)}
                         />
                         <Label htmlFor={material} className="text-sm">
-                          {material.charAt(0).toUpperCase() + material.slice(1)}
+                          {material}
                         </Label>
                       </div>
                     ))}
