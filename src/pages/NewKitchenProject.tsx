@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,22 +68,55 @@ const NewKitchenProject = () => {
     setIsSubmitting(true);
 
     try {
-      // First create the kitchen client
-      const { data: clientData, error: clientError } = await supabase
+      // First check if a client with this email already exists
+      const { data: existingClient, error: checkError } = await supabase
         .from('kitchen_clients')
-        .insert({
-          name: formData.clientName,
-          email: formData.clientEmail,
-          phone: formData.clientPhone,
-          address: formData.clientAddress,
-          client_id: `CLIENT-${Date.now()}`
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('email', formData.clientEmail)
+        .maybeSingle();
 
-      if (clientError) {
-        console.error('Client creation error:', clientError);
-        throw clientError;
+      if (checkError) {
+        console.error('Error checking existing client:', checkError);
+        throw checkError;
+      }
+
+      let clientData;
+
+      if (existingClient) {
+        // Use existing client
+        clientData = existingClient;
+        console.log('Using existing client:', clientData);
+      } else {
+        // Create new client only if one doesn't exist
+        const { data: newClientData, error: clientError } = await supabase
+          .from('kitchen_clients')
+          .insert({
+            name: formData.clientName,
+            email: formData.clientEmail,
+            phone: formData.clientPhone,
+            address: formData.clientAddress,
+            client_id: `CLIENT-${Date.now()}`
+          })
+          .select()
+          .single();
+
+        if (clientError) {
+          console.error('Client creation error:', clientError);
+          
+          // Handle specific duplicate email error
+          if (clientError.code === '23505' && clientError.message.includes('kitchen_clients_email_key')) {
+            toast({
+              title: "Error",
+              description: "A client with this email already exists. Please use a different email.",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          throw clientError;
+        }
+
+        clientData = newClientData;
       }
 
       // Generate project reference using the database function
@@ -121,7 +153,7 @@ const NewKitchenProject = () => {
       });
 
       // Redirect to projects page
-      navigate('/projects');
+      navigate('/kitchen-projects');
       
     } catch (error: any) {
       console.error('Error creating kitchen project:', error);
@@ -141,7 +173,7 @@ const NewKitchenProject = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" onClick={() => navigate('/projects')}>
+              <Button variant="ghost" onClick={() => navigate('/kitchen-projects')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Projects
               </Button>
