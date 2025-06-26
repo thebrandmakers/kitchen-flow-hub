@@ -71,7 +71,7 @@ const NewKitchenProject = () => {
       // First check if a client with this email already exists
       const { data: existingClient, error: checkError } = await supabase
         .from('kitchen_clients')
-        .select('id')
+        .select('id, name, email, phone, address')
         .eq('email', formData.clientEmail)
         .maybeSingle();
 
@@ -86,6 +86,12 @@ const NewKitchenProject = () => {
         // Use existing client
         clientData = existingClient;
         console.log('Using existing client:', clientData);
+        
+        // Show a message that we're using existing client data
+        toast({
+          title: "Info",
+          description: `Using existing client: ${existingClient.name}`,
+        });
       } else {
         // Create new client only if one doesn't exist
         const { data: newClientData, error: clientError } = await supabase
@@ -97,7 +103,7 @@ const NewKitchenProject = () => {
             address: formData.clientAddress,
             client_id: `CLIENT-${Date.now()}`
           })
-          .select()
+          .select('id, name, email, phone, address')
           .single();
 
         if (clientError) {
@@ -117,6 +123,7 @@ const NewKitchenProject = () => {
         }
 
         clientData = newClientData;
+        console.log('Created new client:', clientData);
       }
 
       // Generate project reference using the database function
@@ -147,9 +154,11 @@ const NewKitchenProject = () => {
         throw projectError;
       }
 
+      console.log('Created kitchen project:', projectData);
+
       toast({
         title: "Success",
-        description: "Kitchen project created successfully!",
+        description: `Kitchen project ${referenceData} created successfully!`,
       });
 
       // Redirect to projects page
