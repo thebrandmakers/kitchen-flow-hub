@@ -93,6 +93,57 @@ export type Database = {
         }
         Relationships: []
       }
+      kitchen_project_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_to: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          phase_id: string | null
+          project_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_project_assignments_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kitchen_project_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kitchen_project_files: {
         Row: {
           created_at: string | null
@@ -153,6 +204,9 @@ export type Database = {
       }
       kitchen_project_phases: {
         Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_to: string | null
           completed_at: string | null
           created_at: string | null
           id: string
@@ -164,6 +218,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
@@ -175,6 +232,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
@@ -197,6 +257,8 @@ export type Database = {
       }
       kitchen_project_tasks: {
         Row: {
+          assigned_at: string | null
+          assigned_by: string | null
           assigned_to: string | null
           completed_at: string | null
           created_at: string | null
@@ -209,6 +271,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -221,6 +285,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string | null
@@ -255,11 +321,13 @@ export type Database = {
           client_id: string | null
           created_at: string | null
           current_phase: number | null
+          existing_kitchen_images: string[] | null
           id: string
           intake_pdf_url: string | null
           kitchen_shape: Database["public"]["Enums"]["kitchen_shape"]
           materials: Database["public"]["Enums"]["kitchen_material"][]
           project_reference: string
+          reference_images: string[] | null
           status: Database["public"]["Enums"]["project_status"] | null
           updated_at: string | null
         }
@@ -268,11 +336,13 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           current_phase?: number | null
+          existing_kitchen_images?: string[] | null
           id?: string
           intake_pdf_url?: string | null
           kitchen_shape: Database["public"]["Enums"]["kitchen_shape"]
           materials: Database["public"]["Enums"]["kitchen_material"][]
           project_reference: string
+          reference_images?: string[] | null
           status?: Database["public"]["Enums"]["project_status"] | null
           updated_at?: string | null
         }
@@ -281,11 +351,13 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           current_phase?: number | null
+          existing_kitchen_images?: string[] | null
           id?: string
           intake_pdf_url?: string | null
           kitchen_shape?: Database["public"]["Enums"]["kitchen_shape"]
           materials?: Database["public"]["Enums"]["kitchen_material"][]
           project_reference?: string
+          reference_images?: string[] | null
           status?: Database["public"]["Enums"]["project_status"] | null
           updated_at?: string | null
         }

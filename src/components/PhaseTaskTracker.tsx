@@ -1,12 +1,13 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { jsPDF } from "jspdf";
+import TaskAssignment from "@/components/TaskAssignment";
 
 interface PhaseTaskTrackerProps {
   projectId: string;
@@ -17,6 +18,7 @@ interface Phase {
   phase_name: string;
   phase_number: number;
   status: string;
+  assigned_to?: string;
 }
 
 interface Task {
@@ -34,11 +36,31 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
   const [phases, setPhases] = useState<Phase[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>('');
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchPhasesAndTasks();
+    fetchUserRole();
   }, [projectId]);
+
+  async function fetchUserRole() {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      setUserRole(data?.role || '');
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  }
 
   async function fetchPhasesAndTasks() {
     try {
@@ -158,8 +180,8 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
       const fileName = `kitchen-project-${projectId}-${Date.now()}.pdf`;
       
       const { data, error } = await supabase.storage
-        .from("kitchen-projects")
-        .upload(fileName, pdfBlob, {
+        .from("kitchen-images")
+        .upload(`reports/${fileName}`, pdfBlob, {
           contentType: "application/pdf",
           upsert: true
         });
@@ -173,8 +195,8 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
 
       // Get public URL for WhatsApp
       const { data: urlData } = supabase.storage
-        .from("kitchen-projects")
-        .getPublicUrl(fileName);
+        .from("kitchen-images")
+        .getPublicUrl(`reports/${fileName}`);
 
       if (urlData?.publicUrl) {
         await sendWhatsAppMessage(urlData.publicUrl);
@@ -226,6 +248,8 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
     }
   };
 
+  const canAssignTasks = userRole === 'owner' || userRole === 'designer';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -275,6 +299,18 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
                     <Progress value={progress} className="w-32" />
                   </div>
                 </div>
+
+                {/* Task Assignment Component - Only show for owners/designers */}
+                {canAssignTasks && (
+                  <div className="mb-4">
+                    <TaskAssignment
+                      projectId={projectId}
+                      phaseId={phase.id}
+                      currentAssignedTo={phase.assigned_to}
+                      onAssignmentChange={fetchPhasesAndTasks}
+                    />
+                  </div>
+                )}
 
                 {phaseTasks.length === 0 ? (
                   <p className="text-gray-500 text-sm">No tasks found for this phase.</p>

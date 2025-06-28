@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import ImageUpload from '@/components/ImageUpload';
 
 const NewKitchenProject = () => {
   const navigate = useNavigate();
@@ -23,7 +24,9 @@ const NewKitchenProject = () => {
     clientAddress: '',
     kitchenShape: '',
     budgetBracket: '',
-    materials: [] as string[]
+    materials: [] as string[],
+    existingKitchenImages: [] as string[],
+    referenceImages: [] as string[]
   });
 
   const kitchenShapes = ['L-shape', 'U-shape', 'Parallel', 'Island', 'Straight'];
@@ -135,7 +138,7 @@ const NewKitchenProject = () => {
         throw referenceError;
       }
 
-      // Then create the kitchen project
+      // Then create the kitchen project with images
       const { data: projectData, error: projectError } = await supabase
         .from('kitchen_projects')
         .insert({
@@ -144,7 +147,9 @@ const NewKitchenProject = () => {
           budget_bracket: formData.budgetBracket as "3-5 lakhs" | "5-8 lakhs" | "8-10+ lakhs",
           materials: formData.materials as ("Plywood" | "MDF" | "HDHMR" | "Acrylic" | "Laminate")[],
           project_reference: referenceData,
-          status: 'intake'
+          status: 'intake',
+          existing_kitchen_images: formData.existingKitchenImages,
+          reference_images: formData.referenceImages
         })
         .select()
         .single();
@@ -196,7 +201,7 @@ const NewKitchenProject = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
@@ -300,6 +305,38 @@ const NewKitchenProject = () => {
                     ))}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Existing Kitchen Images */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Existing Kitchen Photos</CardTitle>
+                <CardDescription>Upload photos of the current kitchen space</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageUpload
+                  label="Current Kitchen Images"
+                  images={formData.existingKitchenImages}
+                  onImagesChange={(images) => setFormData(prev => ({...prev, existingKitchenImages: images}))}
+                  maxImages={8}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Reference Images */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Reference Design Images</CardTitle>
+                <CardDescription>Upload inspiration or reference images for the new kitchen design</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageUpload
+                  label="Design Reference Images"
+                  images={formData.referenceImages}
+                  onImagesChange={(images) => setFormData(prev => ({...prev, referenceImages: images}))}
+                  maxImages={6}
+                />
               </CardContent>
             </Card>
           </div>
