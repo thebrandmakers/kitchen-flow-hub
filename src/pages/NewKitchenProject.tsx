@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,38 @@ const NewKitchenProject = () => {
     existingKitchenImages: [] as string[],
     referenceImages: [] as string[]
   });
+
+  // Load user profile data on component mount
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error loading user profile:', error);
+          return;
+        }
+
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            clientEmail: profile.email || user.email || '',
+            clientName: profile.full_name || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   const kitchenShapes = ['L-shape', 'U-shape', 'Parallel', 'Island', 'Straight'];
   const budgetBrackets = ['3-5 lakhs', '5-8 lakhs', '8-10+ lakhs'];
