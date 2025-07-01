@@ -371,6 +371,57 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          project_id: string | null
+          read: boolean | null
+          task_id: string | null
+          title: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          project_id?: string | null
+          read?: boolean | null
+          task_id?: string | null
+          title: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          project_id?: string | null
+          read?: boolean | null
+          task_id?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -582,6 +633,39 @@ export type Database = {
           },
         ]
       }
+      team_members: {
+        Row: {
+          added_by: string | null
+          created_at: string | null
+          department: string | null
+          id: string
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string | null
+          department?: string | null
+          id?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string | null
+          department?: string | null
+          id?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -624,7 +708,15 @@ export type Database = {
         | "installation"
         | "closure"
       task_status: "todo" | "in_progress" | "done"
-      user_role: "owner" | "designer" | "client" | "worker" | "manager"
+      user_role:
+        | "owner"
+        | "designer"
+        | "client"
+        | "worker"
+        | "manager"
+        | "factory"
+        | "installer"
+        | "sales"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -762,7 +854,16 @@ export const Constants = {
         "closure",
       ],
       task_status: ["todo", "in_progress", "done"],
-      user_role: ["owner", "designer", "client", "worker", "manager"],
+      user_role: [
+        "owner",
+        "designer",
+        "client",
+        "worker",
+        "manager",
+        "factory",
+        "installer",
+        "sales",
+      ],
     },
   },
 } as const

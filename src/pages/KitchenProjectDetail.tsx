@@ -2,10 +2,14 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChefHat } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, ChefHat, User, Phone, Mail, MapPin, Calendar, DollarSign } from 'lucide-react';
 import PhaseTaskTracker from '@/components/PhaseTaskTracker';
+import NotificationBell from '@/components/NotificationBell';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 
 const KitchenProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +24,7 @@ const KitchenProjectDetail = () => {
         .from('kitchen_projects')
         .select(`
           *,
-          kitchen_clients(name, email)
+          kitchen_clients(name, email, phone, address)
         `)
         .eq('id', id)
         .single();
@@ -30,6 +34,23 @@ const KitchenProjectDetail = () => {
     },
     enabled: !!id
   });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'intake': return 'bg-blue-100 text-blue-800';
+      case 'design': return 'bg-purple-100 text-purple-800';
+      case 'confirmation': return 'bg-yellow-100 text-yellow-800';
+      case 'production_prep': return 'bg-orange-100 text-orange-800';
+      case 'factory': return 'bg-indigo-100 text-indigo-800';
+      case 'installation': return 'bg-green-100 text-green-800';
+      case 'closure': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatStatus = (status: string) => {
+    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
 
   if (isLoading) {
     return (
@@ -76,15 +97,113 @@ const KitchenProjectDetail = () => {
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Budget: {project.budget_bracket}</div>
-              <div className="text-sm text-gray-500">Phase: {project.current_phase}/6</div>
+            <div className="flex items-center space-x-4">
+              <NotificationBell />
+              <div className="text-right">
+                <Badge className={getStatusColor(project.status || 'intake')}>
+                  {formatStatus(project.status || 'intake')}
+                </Badge>
+                <div className="text-sm text-gray-500 mt-1">Phase: {project.current_phase || 1}/6</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Client Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                Client Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4 text-gray-400" />
+                <span className="font-medium">{project.kitchen_clients?.name || 'N/A'}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4 text-gray-400" />
+                <span className="text-sm">{project.kitchen_clients?.email || 'N/A'}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Phone className="h-4 w-4 text-gray-400" />
+                <span className="text-sm">{project.kitchen_clients?.phone || 'N/A'}</span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                <span className="text-sm">{project.kitchen_clients?.address || 'N/A'}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Project Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <ChefHat className="h-5 w-5 mr-2" />
+                Project Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <span className="text-sm text-gray-500">Kitchen Shape:</span>
+                <p className="font-medium">{project.kitchen_shape}</p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-500">Budget Bracket:</span>
+                <p className="font-medium">{project.budget_bracket}</p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-500">Materials:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {project.materials?.map((material, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {material}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <span className="text-sm text-gray-500">Current Phase:</span>
+                <p className="font-medium">{project.current_phase || 1} of 6</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <span className="text-sm text-gray-500">Created:</span>
+                <p className="font-medium">
+                  {format(new Date(project.created_at), 'MMM dd, yyyy')}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-500">Last Updated:</span>
+                <p className="font-medium">
+                  {format(new Date(project.updated_at), 'MMM dd, yyyy')}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-500">Project Reference:</span>
+                <p className="font-medium font-mono text-sm">{project.project_reference}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Phase Task Tracker */}
         <PhaseTaskTracker projectId={id!} />
       </div>
     </div>

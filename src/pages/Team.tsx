@@ -1,30 +1,52 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building2, ArrowLeft, Plus, Users, Mail } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Building2, ArrowLeft, Users, Phone, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTeamMembers } from '@/hooks/useTeamMembers';
+import InviteMemberDialog from '@/components/team/InviteMemberDialog';
+import { format } from 'date-fns';
 
 const Team = () => {
   const navigate = useNavigate();
+  const { teamMembers, isLoading } = useTeamMembers();
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'owner': return 'bg-purple-100 text-purple-800';
+      case 'manager': return 'bg-indigo-100 text-indigo-800';
       case 'designer': return 'bg-blue-100 text-blue-800';
-      case 'client': return 'bg-green-100 text-green-800';
-      case 'worker': return 'bg-orange-100 text-orange-800';
+      case 'factory': return 'bg-orange-100 text-orange-800';
+      case 'installer': return 'bg-green-100 text-green-800';
+      case 'sales': return 'bg-pink-100 text-pink-800';
+      case 'worker': return 'bg-yellow-100 text-yellow-800';
+      case 'client': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const teamMembers = [
-    { id: 1, name: 'John Smith', email: 'john@example.com', role: 'owner', avatar: '' },
-    { id: 2, name: 'Jane Doe', email: 'jane@example.com', role: 'designer', avatar: '' },
-    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'worker', avatar: '' },
-    { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'client', avatar: '' },
-  ];
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'inactive': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading team members...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -42,38 +64,76 @@ const Team = () => {
                 <p className="text-sm text-gray-500">Manage team members and invitations</p>
               </div>
             </div>
-            <Button>
-              <Mail className="h-4 w-4 mr-2" />
-              Invite Member
-            </Button>
+            <InviteMemberDialog />
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teamMembers.map((member) => (
-            <Card key={member.id} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarImage src={member.avatar} />
-                    <AvatarFallback>
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-900">{member.name}</h3>
-                    <p className="text-sm text-gray-500">{member.email}</p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${getRoleColor(member.role)}`}>
-                      {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                    </span>
+        {teamMembers && teamMembers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {teamMembers.map((member) => (
+              <Card key={member.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={member.profiles?.avatar_url || ''} />
+                      <AvatarFallback>
+                        {member.profiles?.full_name 
+                          ? member.profiles.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
+                          : 'TM'
+                        }
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {member.profiles?.full_name || 'Team Member'}
+                      </h3>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Mail className="h-3 w-3 text-gray-400" />
+                        <p className="text-sm text-gray-500">{member.profiles?.email}</p>
+                      </div>
+                      {member.phone && (
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Phone className="h-3 w-3 text-gray-400" />
+                          <p className="text-sm text-gray-500">{member.phone}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  
+                  <div className="mt-4 space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className={getRoleColor(member.profiles?.role || 'worker')}>
+                        {(member.profiles?.role || 'worker').charAt(0).toUpperCase() + (member.profiles?.role || 'worker').slice(1)}
+                      </Badge>
+                      <Badge className={getStatusColor(member.status || 'active')}>
+                        {(member.status || 'active').charAt(0).toUpperCase() + (member.status || 'active').slice(1)}
+                      </Badge>
+                    </div>
+                    
+                    {member.department && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Department:</span> {member.department}
+                      </p>
+                    )}
+                    
+                    <p className="text-xs text-gray-500">
+                      Joined {format(new Date(member.created_at), 'MMM dd, yyyy')}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Team Members</h3>
+            <p className="text-gray-500 mb-6">Start building your team by inviting members.</p>
+            <InviteMemberDialog />
+          </div>
+        )}
       </div>
     </div>
   );
