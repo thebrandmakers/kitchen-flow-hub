@@ -4,7 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-type UserRole = 'owner' | 'designer' | 'client' | 'worker';
+type UserRole = 'owner' | 'designer' | 'client' | 'worker' | 'manager' | 'factory' | 'installer' | 'sales';
 
 interface AuthContextType {
   user: User | null;
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .eq('id', session.user.id)
                 .single();
               
-              setUserRole(profile?.role || 'client');
+              setUserRole(profile?.role as UserRole || 'client');
             } catch (error) {
               console.error('Error fetching user role:', error);
             }

@@ -13,7 +13,7 @@ export const useTeamMembers = () => {
         .from('team_members')
         .select(`
           *,
-          profiles!team_members_user_id_fkey(full_name, email, role, avatar_url)
+          profiles!inner(full_name, email, role, avatar_url)
         `)
         .order('created_at', { ascending: false });
       

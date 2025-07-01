@@ -15,7 +15,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'owner' | 'designer' | 'client' | 'worker'>('client');
+  const [role, setRole] = useState<'owner' | 'designer' | 'client' | 'worker' | 'manager' | 'factory' | 'installer' | 'sales'>('client');
   const [loading, setLoading] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
@@ -162,9 +162,13 @@ const Auth = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="owner">Owner</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="designer">Designer</SelectItem>
-                      <SelectItem value="client">Client</SelectItem>
+                      <SelectItem value="factory">Factory</SelectItem>
+                      <SelectItem value="installer">Installer</SelectItem>
+                      <SelectItem value="sales">Sales</SelectItem>
                       <SelectItem value="worker">Worker</SelectItem>
+                      <SelectItem value="client">Client</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
