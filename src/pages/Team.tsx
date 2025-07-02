@@ -1,18 +1,52 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Building2, ArrowLeft, Users, Phone, Mail } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Building2, ArrowLeft, Users, Phone, Mail, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
+import { useAuth } from '@/contexts/AuthContext';
 import InviteMemberDialog from '@/components/team/InviteMemberDialog';
 import { format } from 'date-fns';
 
 const Team = () => {
   const navigate = useNavigate();
-  const { teamMembers, isLoading } = useTeamMembers();
+  const { userRole } = useAuth();
+  const { teamMembers, isLoading, deleteMember, updateMember } = useTeamMembers();
+  const [editingMember, setEditingMember] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ department: '', phone: '', status: '' });
+
+  const handleEditMember = (member: any) => {
+    setEditingMember(member);
+    setEditForm({
+      department: member.department || '',
+      phone: member.phone || '',
+      status: member.status || 'active'
+    });
+  };
+
+  const handleUpdateMember = async () => {
+    if (!editingMember) return;
+    
+    try {
+      await updateMember.mutateAsync({
+        id: editingMember.id,
+        updates: editForm
+      });
+      setEditingMember(null);
+    } catch (error) {
+      console.error('Failed to update member:', error);
+    }
+  };
+
+  const canManageTeam = userRole === 'owner' || userRole === 'manager';
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -121,6 +155,81 @@ const Team = () => {
                     <p className="text-xs text-gray-500">
                       Joined {format(new Date(member.created_at), 'MMM dd, yyyy')}
                     </p>
+
+                    {canManageTeam && (
+                      <div className="flex gap-2 mt-3">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleEditMember(member)}>
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Team Member</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="department">Department</Label>
+                                <Input
+                                  id="department"
+                                  value={editForm.department}
+                                  onChange={(e) => setEditForm({...editForm, department: e.target.value})}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="phone">Phone</Label>
+                                <Input
+                                  id="phone"
+                                  value={editForm.phone}
+                                  onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="status">Status</Label>
+                                <Select value={editForm.status} onValueChange={(value) => setEditForm({...editForm, status: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <Button onClick={handleUpdateMember} className="w-full">
+                                Update Member
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Team Member</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove {member.profiles?.full_name} from the team? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteMember.mutateAsync(member.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

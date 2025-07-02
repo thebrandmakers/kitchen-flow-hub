@@ -17,6 +17,7 @@ import Team from "./pages/Team";
 import KitchenProjects from "./pages/KitchenProjects";
 import NewKitchenProject from "./pages/NewKitchenProject";
 import KitchenProjectDetail from "./pages/KitchenProjectDetail";
+import AdminRegister from "./pages/AdminRegister";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -100,6 +101,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Team />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/register" 
+              element={
+                <ProtectedRoute>
+                  <AdminRegister />
                 </ProtectedRoute>
               } 
             />

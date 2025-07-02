@@ -113,10 +113,54 @@ export const useTeamMembers = () => {
     }
   });
 
+  const deleteMember = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      toast({
+        title: "Success",
+        description: "Team member removed successfully",
+      });
+    }
+  });
+
+  const updateMember = useMutation({
+    mutationFn: async ({ id, updates }: { 
+      id: string; 
+      updates: { department?: string; phone?: string; status?: string } 
+    }) => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      toast({
+        title: "Success",
+        description: "Team member updated successfully",
+      });
+    }
+  });
+
   return {
     teamMembers,
     isLoading,
     inviteMember,
-    updateMemberStatus
+    updateMemberStatus,
+    deleteMember,
+    updateMember
   };
 };
