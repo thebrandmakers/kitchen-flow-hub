@@ -9,16 +9,30 @@ export const useTeamMembers = () => {
   const { data: teamMembers, isLoading } = useQuery({
     queryKey: ['team-members'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: teamMembersData, error } = await supabase
         .from('team_members')
-        .select(`
-          *,
-          profiles!inner(full_name, email, role, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      if (!teamMembersData) return [];
+
+      // Manually fetch profile data for each team member
+      const teamMembersWithProfiles = await Promise.all(
+        teamMembersData.map(async (member) => {
+          if (!member.user_id) return { ...member, profiles: null };
+          
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email, role, avatar_url')
+            .eq('id', member.user_id)
+            .single();
+          
+          return { ...member, profiles: profile };
+        })
+      );
+      
+      return teamMembersWithProfiles;
     }
   });
 
