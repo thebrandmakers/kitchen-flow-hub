@@ -18,6 +18,7 @@ import KitchenProjects from "./pages/KitchenProjects";
 import NewKitchenProject from "./pages/NewKitchenProject";
 import KitchenProjectDetail from "./pages/KitchenProjectDetail";
 import AdminRegister from "./pages/AdminRegister";
+import ClientManagement from "./pages/ClientManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -109,6 +110,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AdminRegister />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clients" 
+              element={
+                <ProtectedRoute>
+                  <ClientManagement />
                 </ProtectedRoute>
               } 
             />

@@ -614,6 +614,51 @@ export type Database = {
         }
         Relationships: []
       }
+      task_updates: {
+        Row: {
+          created_at: string | null
+          id: string
+          images: string[] | null
+          message: string
+          task_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          images?: string[] | null
+          message: string
+          task_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          images?: string[] | null
+          message?: string
+          task_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_updates_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_updates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_to: string | null

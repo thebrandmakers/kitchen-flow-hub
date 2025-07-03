@@ -9,17 +9,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Building2, ArrowLeft, Users, Phone, Mail, Edit, Trash2 } from 'lucide-react';
+import { Building2, ArrowLeft, Users, Phone, Mail, Edit, Trash2, ChefHat, ClipboardList, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useAuth } from '@/contexts/AuthContext';
 import InviteMemberDialog from '@/components/team/InviteMemberDialog';
 import { format } from 'date-fns';
+import { useAllProfiles } from '@/hooks/useAllProfiles';
+import { useAssignedProjects } from '@/hooks/useAssignedProjects';
 
 const Team = () => {
   const navigate = useNavigate();
   const { userRole } = useAuth();
   const { teamMembers, isLoading, deleteMember, updateMember } = useTeamMembers();
+  const { data: allProfiles } = useAllProfiles();
+  const { data: assignedProjects } = useAssignedProjects();
   const [editingMember, setEditingMember] = useState<any>(null);
   const [editForm, setEditForm] = useState({ department: '', phone: '', status: '' });
 
@@ -46,7 +50,8 @@ const Team = () => {
     }
   };
 
-  const canManageTeam = userRole === 'owner' || userRole === 'manager';
+  const canManageTeam = userRole === 'owner' || userRole === 'manager' || userRole === 'designer';
+  const isTeamLead = userRole === 'owner' || userRole === 'designer' || userRole === 'manager';
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -98,14 +103,121 @@ const Team = () => {
                 <p className="text-sm text-gray-500">Manage team members and invitations</p>
               </div>
             </div>
-            <InviteMemberDialog />
+            {canManageTeam && <InviteMemberDialog />}
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {teamMembers && teamMembers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Show different content based on role */}
+        {isTeamLead ? (
+          <>
+            <h2 className="text-xl font-semibold mb-6">All Team Members</h2>
+            {allProfiles && allProfiles.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allProfiles.map((profile) => (
+                  <Card key={profile.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={profile.avatar_url || ''} />
+                          <AvatarFallback>
+                            {profile.full_name 
+                              ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
+                              : 'TM'
+                            }
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {profile.full_name || 'Team Member'}
+                          </h3>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Mail className="h-3 w-3 text-gray-400" />
+                            <p className="text-sm text-gray-500">{profile.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className={getRoleColor(profile.role)}>
+                            {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
+                          </Badge>
+                        </div>
+                        
+                        <p className="text-xs text-gray-500">
+                          Registered {format(new Date(profile.created_at), 'MMM dd, yyyy')}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Team Members</h3>
+                <p className="text-gray-500 mb-6">Start building your team by inviting members.</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 className="text-xl font-semibold mb-6">My Assigned Projects</h2>
+            {assignedProjects && assignedProjects.length > 0 ? (
+              <div className="space-y-4">
+                {assignedProjects.map((assignment) => (
+                  <Card key={assignment.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <ChefHat className="h-8 w-8 text-orange-600" />
+                          <div>
+                            <h3 className="text-lg font-medium text-gray-900">
+                              {assignment.kitchen_projects?.project_reference}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              Phase {assignment.phase_number}: {assignment.phase_name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Client: {assignment.kitchen_projects?.kitchen_clients?.name}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={assignment.status === 'done' ? 'bg-green-100 text-green-800' : assignment.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}>
+                            {assignment.status?.replace('_', ' ').toUpperCase() || 'TODO'}
+                          </Badge>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => navigate(`/kitchen-projects/${assignment.kitchen_projects?.id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Assignments</h3>
+                <p className="text-gray-500">You don't have any project assignments yet.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Legacy team members section for management roles */}
+        {canManageTeam && teamMembers && teamMembers.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xl font-semibold mb-6">Team Member Management</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {teamMembers.map((member) => (
               <Card key={member.id} className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
@@ -234,13 +346,7 @@ const Team = () => {
                 </CardContent>
               </Card>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Team Members</h3>
-            <p className="text-gray-500 mb-6">Start building your team by inviting members.</p>
-            <InviteMemberDialog />
+            </div>
           </div>
         )}
       </div>

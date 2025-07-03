@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { jsPDF } from "jspdf";
 import TaskAssignment from "@/components/TaskAssignment";
+import TaskUpdateDialog from "@/components/TaskUpdateDialog";
+import ProjectChat from "@/components/ProjectChat";
 
 interface PhaseTaskTrackerProps {
   projectId: string;
@@ -249,6 +251,8 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
   };
 
   const canAssignTasks = userRole === 'owner' || userRole === 'designer';
+  const canUpdateTasks = userRole === 'owner' || userRole === 'designer' || 
+    tasks.some(task => task.phase_id && phases.find(p => p.id === task.phase_id)?.assigned_to === user?.id);
 
   if (loading) {
     return (
@@ -316,35 +320,43 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
                   <p className="text-gray-500 text-sm">No tasks found for this phase.</p>
                 ) : (
                   <ul className="space-y-3">
-                    {phaseTasks.map((task) => (
+                     {phaseTasks.map((task) => (
                       <li key={task.id} className="border border-gray-200 p-4 rounded-lg bg-gray-50">
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-medium text-gray-900">{task.task_name}</span>
-                          <div className="flex space-x-1">
-                            <Button
-                              size="sm"
-                              variant={task.status === "todo" ? "default" : "outline"}
-                              onClick={() => handleStatusUpdate(task.id, "todo")}
-                              className="text-xs"
-                            >
-                              Todo
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={task.status === "in_progress" ? "default" : "outline"}
-                              onClick={() => handleStatusUpdate(task.id, "in_progress")}
-                              className="text-xs"
-                            >
-                              In Progress
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={task.status === "done" ? "default" : "outline"}
-                              onClick={() => handleStatusUpdate(task.id, "done")}
-                              className="text-xs"
-                            >
-                              Done
-                            </Button>
+                          <div className="flex space-x-2">
+                            <TaskUpdateDialog
+                              taskId={task.id}
+                              taskName={task.task_name}
+                              onTaskComplete={() => handleStatusUpdate(task.id, "done")}
+                              canUpdate={canUpdateTasks || phase.assigned_to === user?.id}
+                            />
+                            <div className="flex space-x-1">
+                              <Button
+                                size="sm"
+                                variant={task.status === "todo" ? "default" : "outline"}
+                                onClick={() => handleStatusUpdate(task.id, "todo")}
+                                className="text-xs"
+                              >
+                                Todo
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={task.status === "in_progress" ? "default" : "outline"}
+                                onClick={() => handleStatusUpdate(task.id, "in_progress")}
+                                className="text-xs"
+                              >
+                                In Progress
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={task.status === "done" ? "default" : "outline"}
+                                onClick={() => handleStatusUpdate(task.id, "done")}
+                                className="text-xs"
+                              >
+                                Done
+                              </Button>
+                            </div>
                           </div>
                         </div>
                         
@@ -369,6 +381,11 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
           );
         })
       )}
+
+      {/* Project Chat Section */}
+      <div className="mt-8">
+        <ProjectChat projectId={projectId} />
+      </div>
     </div>
   );
 }
