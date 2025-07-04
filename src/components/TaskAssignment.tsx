@@ -35,7 +35,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, role')
-        .in('role', ['designer', 'worker'])
+        .in('role', ['designer', 'worker', 'factory', 'installer', 'manager'])
         .order('full_name');
       
       if (error) throw error;

@@ -99,6 +99,70 @@ export type Database = {
           },
         ]
       }
+      individual_tasks: {
+        Row: {
+          assigned_by: string | null
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          images: string[] | null
+          phase_id: string | null
+          status: string | null
+          task_description: string | null
+          task_title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          images?: string[] | null
+          phase_id?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          images?: string[] | null
+          phase_id?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "individual_tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "individual_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "individual_tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_project_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kitchen_clients: {
         Row: {
           address: string

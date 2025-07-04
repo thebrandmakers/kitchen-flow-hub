@@ -9,7 +9,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { jsPDF } from "jspdf";
 import TaskAssignment from "@/components/TaskAssignment";
 import TaskUpdateDialog from "@/components/TaskUpdateDialog";
-import ProjectChat from "@/components/ProjectChat";
+import IndividualTaskManager from "@/components/IndividualTaskManager";
+import PhaseCompletionButton from "@/components/PhaseCompletionButton";
+import ChatWithImageUpload from "@/components/ChatWithImageUpload";
 
 interface PhaseTaskTrackerProps {
   projectId: string;
@@ -250,8 +252,8 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
     }
   };
 
-  const canAssignTasks = userRole === 'owner' || userRole === 'designer';
-  const canUpdateTasks = userRole === 'owner' || userRole === 'designer' || 
+  const canAssignTasks = userRole === 'owner' || userRole === 'designer' || userRole === 'manager';
+  const canUpdateTasks = userRole === 'owner' || userRole === 'designer' || userRole === 'manager' || 
     tasks.some(task => task.phase_id && phases.find(p => p.id === task.phase_id)?.assigned_to === user?.id);
 
   if (loading) {
@@ -304,7 +306,7 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
                   </div>
                 </div>
 
-                {/* Task Assignment Component - Only show for owners/designers */}
+                {/* Task Assignment Component - Only show for owners/designers/managers */}
                 {canAssignTasks && (
                   <div className="mb-4">
                     <TaskAssignment
@@ -315,6 +317,25 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
                     />
                   </div>
                 )}
+
+                {/* Individual Task Manager */}
+                <div className="mb-4">
+                  <IndividualTaskManager
+                    phaseId={phase.id}
+                    projectId={projectId}
+                  />
+                </div>
+
+                {/* Phase Completion Button */}
+                <div className="mb-4 flex justify-end">
+                  <PhaseCompletionButton
+                    phaseId={phase.id}
+                    phaseName={`Phase ${phase.phase_number}: ${formatPhaseName(phase.phase_name)}`}
+                    isCompleted={phase.status === 'done'}
+                    onPhaseComplete={fetchPhasesAndTasks}
+                    canComplete={canUpdateTasks || phase.assigned_to === user?.id}
+                  />
+                </div>
 
                 {phaseTasks.length === 0 ? (
                   <p className="text-gray-500 text-sm">No tasks found for this phase.</p>
@@ -382,9 +403,9 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
         })
       )}
 
-      {/* Project Chat Section */}
+      {/* Project Chat Section with Image Upload */}
       <div className="mt-8">
-        <ProjectChat projectId={projectId} />
+        <ChatWithImageUpload projectId={projectId} />
       </div>
     </div>
   );

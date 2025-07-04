@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import NewProject from "./pages/NewProject";
 import Tasks from "./pages/Tasks";
+import TaskDashboard from "./pages/TaskDashboard";
 import Reports from "./pages/Reports";
 import Team from "./pages/Team";
 import KitchenProjects from "./pages/KitchenProjects";
@@ -86,6 +87,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Tasks />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/my-tasks" 
+              element={
+                <ProtectedRoute>
+                  <TaskDashboard />
                 </ProtectedRoute>
               } 
             />

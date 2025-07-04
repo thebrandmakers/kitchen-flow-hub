@@ -196,6 +196,15 @@ const Dashboard = () => {
           
           <Button 
             variant="outline" 
+            onClick={() => navigate('/my-tasks')} 
+            className="h-20 flex-col space-y-2"
+          >
+            <ClipboardList className="h-6 w-6" />
+            My Tasks
+          </Button>
+          
+          <Button 
+            variant="outline" 
             onClick={() => navigate('/team')} 
             className="h-20 flex-col space-y-2"
           >
