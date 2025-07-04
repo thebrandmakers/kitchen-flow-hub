@@ -106,10 +106,13 @@ const IndividualTaskManager: React.FC<IndividualTaskManagerProps> = ({
                 Add Task
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby="create-task-description">
               <DialogHeader>
                 <DialogTitle>Create New Task</DialogTitle>
               </DialogHeader>
+              <p id="create-task-description" className="sr-only">
+                Create a new individual task and assign it to a team member
+              </p>
               
               <div className="space-y-4">
                 <div>

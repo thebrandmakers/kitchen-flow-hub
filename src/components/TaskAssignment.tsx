@@ -68,7 +68,8 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({
           phase_id: phaseId,
           assigned_to: selectedUser,
           assigned_by: user.id,
-          notes: notes || null
+          notes: notes || null,
+          assigned_at: new Date().toISOString()
         });
 
       if (assignmentError) throw assignmentError;

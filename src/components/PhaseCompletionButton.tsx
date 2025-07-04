@@ -102,10 +102,13 @@ const PhaseCompletionButton: React.FC<PhaseCompletionButtonProps> = ({
           Mark Phase Complete
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent aria-describedby="phase-completion-description">
         <DialogHeader>
           <DialogTitle>Complete Phase: {phaseName}</DialogTitle>
         </DialogHeader>
+        <p id="phase-completion-description" className="sr-only">
+          Mark this phase as completed with optional notes and photos
+        </p>
         
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
