@@ -4,18 +4,57 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
+// Push notification function
+const requestPushNotification = async (notification: any) => {
+  // Check if browser supports notifications
+  if (!('Notification' in window)) return;
+  
+  // Request permission if not granted
+  if (Notification.permission === 'default') {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+  }
+  
+  // Show push notification if permission granted
+  if (Notification.permission === 'granted') {
+    const pushNotification = new Notification(notification.title, {
+      body: notification.message,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      requireInteraction: true
+    });
+    
+    pushNotification.onclick = () => {
+      window.focus();
+      if (notification.project_id) {
+        window.location.href = `/kitchen-projects/${notification.project_id}`;
+      }
+      pushNotification.close();
+    };
+    
+    // Auto close after 5 seconds
+    setTimeout(() => pushNotification.close(), 5000);
+  }
+};
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Play notification sound
+  // Play notification sound and vibration
   const playNotificationSound = () => {
+    // High-quality notification sound (2 seconds)
     const audio = new Audio();
-    audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmINBz2P1fPQeSsFJXfH8N2QQAoUXrTp66hVFApGn+DyvmINBz2P1fPQeSsFJXfH8N2QQAoUXrTp66hVFApGn+DyvmINBz2P1fPQeSsFJXfH8N2QQAoUXrTp66hVFApGn+DyvmINBz2P1fPQeSsFJXfH8N2QQAoUXrTp66hVFApGn+DyvmINBz2P1fPQeSsFJXfH8N2QQAoUXrTp66hVFApGn+DyvmINBz2P1fPQeSsFJXfH8N2QQAoUXrTp66hVFApGn+DyvmINBz2P1fPQeSsF';
+    audio.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAD/+xDEAAH2AcYAJ4AAZw9wgFU4BwAABgBQQAEAAAAAACDxAECzT1A0kYJqGJsw+YSgCXAgYDqHyKFHSAaXiJQLNLNUmIBM7kzNTY2NjZ1Wz/+xDEFAKIKdQBmFgAoggCgBjBgAAOAgM8R8m3LY9iM7JMGhOEsRQEBBZsJqI1v/PYFJ1e/2Mg9EpKST0z///uHDc/3JYzOIRvQ+/+xDEIQLhGkAAZhAAqoQCgBjBgAAHgBaQAhUIAAAB6AWEAI2ABdv/+d/YHxD6T8/OIGfxJPd6wR/8QxBECzh4QAGYQAAKIEYAA2AAAB4AAgAhUIAAAB6AAgAhGAANr/uOJQ3//kYzEkn///h/9/y8ZIf8QxBUCzh4QAGYQAAKIEYAA2AAAB';
+    audio.volume = 0.8;
     audio.play().catch(() => {
-      // Fallback if audio fails to play
       console.log('Notification sound failed to play');
     });
+
+    // Add vibration for 2 seconds on mobile devices
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200, 100, 200, 100, 200, 100, 200, 100]);
+    }
   };
 
   // Fetch notifications with project details
@@ -87,10 +126,13 @@ export const useNotifications = () => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          // Play notification sound
+          // Play notification sound and vibration
           playNotificationSound();
           
-          // Show toast notification
+          // Request push notification permission and send notification
+          requestPushNotification(payload.new);
+          
+          // Show toast notification with click handler
           toast({
             title: payload.new.title,
             description: payload.new.message,

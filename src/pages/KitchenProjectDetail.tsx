@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ChefHat, User, Phone, Mail, MapPin, Calendar, DollarSign } from 'lucide-react';
 import PhaseTaskTracker from '@/components/PhaseTaskTracker';
+import PhaseProgressIndicator from '@/components/PhaseProgressIndicator';
 import NotificationBell from '@/components/NotificationBell';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,26 @@ const KitchenProjectDetail = () => {
         `)
         .eq('id', id)
         .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id
+  });
+
+  const { data: phases } = useQuery({
+    queryKey: ['kitchen-project-phases', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Project ID is required');
+      
+      const { data, error } = await supabase
+        .from('kitchen_project_phases')
+        .select(`
+          *,
+          assigned_profile:profiles!kitchen_project_phases_assigned_to_fkey(full_name, email)
+        `)
+        .eq('project_id', id)
+        .order('phase_number');
       
       if (error) throw error;
       return data;
@@ -203,8 +224,18 @@ const KitchenProjectDetail = () => {
           </Card>
         </div>
 
+        {/* Phase Progress */}
+        {phases && <PhaseProgressIndicator phases={phases.map(phase => ({
+          ...phase,
+          profiles: Array.isArray(phase.assigned_profile) && phase.assigned_profile.length > 0 
+            ? phase.assigned_profile[0] 
+            : null
+        }))} />}
+        
         {/* Phase Task Tracker */}
-        <PhaseTaskTracker projectId={id!} />
+        <div className="mt-6">
+          <PhaseTaskTracker projectId={id!} />
+        </div>
       </div>
     </div>
   );

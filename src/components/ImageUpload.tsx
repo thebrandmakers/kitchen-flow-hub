@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,8 +21,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   maxImages = 5
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
@@ -36,11 +36,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return;
     }
 
+    setSelectedFiles(files);
+  };
+
+  const handleFileUpload = async () => {
+    if (!selectedFiles) return;
+
     setUploading(true);
     const uploadedUrls: string[] = [];
 
     try {
-      for (const file of Array.from(files)) {
+      for (const file of Array.from(selectedFiles)) {
         if (!file.type.startsWith('image/')) {
           toast({
             title: "Error",
@@ -93,8 +99,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       });
     } finally {
       setUploading(false);
-      // Reset input
-      event.target.value = '';
+      setSelectedFiles(null);
     }
   };
 
@@ -126,7 +131,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           type="file"
           accept="image/*"
           multiple
-          onChange={handleFileUpload}
+          onChange={handleFileSelection}
           disabled={uploading || images.length >= maxImages}
           className="hidden"
           id={`file-upload-${label.replace(/\s+/g, '-').toLowerCase()}`}
@@ -146,6 +151,26 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </div>
         </Label>
       </div>
+
+      {selectedFiles && selectedFiles.length > 0 && (
+        <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <ImageIcon className="h-5 w-5 text-blue-600" />
+            <span className="text-sm text-blue-800">
+              {selectedFiles.length} file(s) selected
+            </span>
+          </div>
+          <Button 
+            onClick={handleFileUpload}
+            disabled={uploading}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {uploading ? 'Uploading...' : 'Upload Files'}
+          </Button>
+        </div>
+      )}
 
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { MessageCircle, ImageIcon, Send } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
+import ChatNotifications from '@/components/ChatNotifications';
 
 interface ChatWithImageUploadProps {
   projectId: string;
@@ -84,13 +85,15 @@ export const ChatWithImageUpload: React.FC<ChatWithImageUploadProps> = ({ projec
   }
 
   return (
-    <Card className="h-[500px] flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5" />
-          Project Chat
-        </CardTitle>
-      </CardHeader>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Chat Section */}
+      <Card className="h-[500px] flex flex-col">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
+            Project Chat
+          </CardTitle>
+        </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">
         <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
@@ -187,6 +190,10 @@ export const ChatWithImageUpload: React.FC<ChatWithImageUploadProps> = ({ projec
         </form>
       </CardContent>
     </Card>
+    
+    {/* Notifications Section */}
+    <ChatNotifications projectId={projectId} />
+    </div>
   );
 };
 

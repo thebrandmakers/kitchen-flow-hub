@@ -62,23 +62,29 @@ const NotificationBell = () => {
                       ? 'bg-gray-50 hover:bg-gray-100' 
                       : 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500'
                   }`}
-                  onClick={() => !notification.read && handleMarkAsRead(notification.id)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{notification.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-gray-500">
-                          {format(new Date(notification.created_at), 'MMM dd, HH:mm')}
-                        </span>
-                        {notification.kitchen_projects?.project_reference && (
-                          <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                            {notification.kitchen_projects.project_reference}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                   onClick={() => {
+                     if (!notification.read) handleMarkAsRead(notification.id);
+                     // Navigate to project if project_id exists
+                     if (notification.project_id) {
+                       window.location.href = `/kitchen-projects/${notification.project_id}`;
+                     }
+                   }}
+                 >
+                   <div className="flex justify-between items-start">
+                     <div className="flex-1">
+                       <h4 className="font-medium text-sm">{notification.title}</h4>
+                       <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                       <div className="flex items-center justify-between mt-2">
+                         <span className="text-xs text-gray-500">
+                           {format(new Date(notification.created_at), 'MMM dd, HH:mm')}
+                         </span>
+                         {notification.kitchen_projects?.project_reference && (
+                           <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded cursor-pointer">
+                             {notification.kitchen_projects.project_reference}
+                           </span>
+                         )}
+                       </div>
+                     </div>
                     {!notification.read && (
                       <Button
                         variant="ghost"
