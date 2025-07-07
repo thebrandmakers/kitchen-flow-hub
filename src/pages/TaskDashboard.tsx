@@ -115,59 +115,74 @@ const TaskDashboard = () => {
           <CardContent>
             {assignedTasks && assignedTasks.length > 0 ? (
               <div className="space-y-4">
-                {assignedTasks.map((task) => (
-                  <div key={task.id} className="p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-start space-x-3">
-                        {getStatusIcon(task.status)}
-                        <div>
-                          <h3 className="font-medium text-gray-900">{task.task_title}</h3>
-                          <p className="text-sm text-gray-500 mt-1">{task.task_description}</p>
-                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                            <span>
-                              Project: {task.kitchen_project_phases?.kitchen_projects?.project_reference}
-                            </span>
-                            <span>
-                              Phase: {task.kitchen_project_phases?.phase_name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </span>
-                            <span>
-                              Assigned: {format(new Date(task.created_at), 'MMM dd, yyyy')}
-                            </span>
+                {assignedTasks.map((task) => {
+                  // Debug logging only if project ID is missing
+                  if (!task.kitchen_project_phases?.kitchen_projects?.id) {
+                    console.warn('Missing project ID for task:', task.id, task);
+                  }
+                  
+                  return (
+                    <div key={task.id} className="p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-start space-x-3">
+                          {getStatusIcon(task.status)}
+                          <div>
+                            <h3 className="font-medium text-gray-900">{task.task_title}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{task.task_description}</p>
+                            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                              <span>
+                                Project: {task.kitchen_project_phases?.kitchen_projects?.project_reference || 'N/A'}
+                              </span>
+                              <span>
+                                Phase: {task.kitchen_project_phases?.phase_name?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
+                              </span>
+                              <span>
+                                Assigned: {format(new Date(task.created_at), 'MMM dd, yyyy')}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Badge className={getStatusColor(task.status)}>
-                          {task.status.replace('_', ' ').toUpperCase()}
-                        </Badge>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate(`/kitchen-projects/${task.kitchen_project_phases?.kitchen_projects?.id}`)}
-                        >
-                          View Project
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {task.images && task.images.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Progress Photos:</p>
-                        <div className="grid grid-cols-4 gap-2">
-                          {task.images.slice(0, 4).map((imageUrl, index) => (
-                            <img
-                              key={index}
-                              src={imageUrl}
-                              alt={`Progress ${index + 1}`}
-                              className="w-full h-16 object-cover rounded border cursor-pointer"
-                              onClick={() => window.open(imageUrl, '_blank')}
-                            />
-                          ))}
+                        <div className="flex items-center space-x-3">
+                          <Badge className={getStatusColor(task.status)}>
+                            {task.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const projectId = task.kitchen_project_phases?.kitchen_projects?.id;
+                              if (projectId) {
+                                navigate(`/kitchen-projects/${projectId}`);
+                              } else {
+                                console.error('Project ID not found in task data:', task);
+                                alert('Unable to navigate to project - project information is missing');
+                              }
+                            }}
+                          >
+                            View Project
+                          </Button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      
+                      {task.images && task.images.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Progress Photos:</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {task.images.slice(0, 4).map((imageUrl, index) => (
+                              <img
+                                key={index}
+                                src={imageUrl}
+                                alt={`Progress ${index + 1}`}
+                                className="w-full h-16 object-cover rounded border cursor-pointer"
+                                onClick={() => window.open(imageUrl, '_blank')}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">

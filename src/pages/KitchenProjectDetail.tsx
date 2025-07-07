@@ -16,10 +16,12 @@ const KitchenProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: project, isLoading } = useQuery({
+  const { data: project, isLoading, error } = useQuery({
     queryKey: ['kitchen-project', id],
     queryFn: async () => {
-      if (!id) throw new Error('Project ID is required');
+      if (!id || id === 'undefined' || id === 'null') {
+        throw new Error('Invalid project ID');
+      }
       
       const { data, error } = await supabase
         .from('kitchen_projects')
@@ -33,7 +35,7 @@ const KitchenProjectDetail = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!id
+    enabled: !!id && id !== 'undefined' && id !== 'null'
   });
 
   const { data: phases } = useQuery({
@@ -84,13 +86,15 @@ const KitchenProjectDetail = () => {
     );
   }
 
-  if (!project) {
+  if (error || (!project && !isLoading)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <ChefHat className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Project Not Found</h2>
-          <p className="text-gray-600 mb-6">The kitchen project you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-6">
+            {error?.message || "The kitchen project you're looking for doesn't exist."}
+          </p>
           <Button onClick={() => navigate('/kitchen-projects')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Kitchen Projects

@@ -321,7 +321,14 @@ const Dashboard = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => navigate(`/kitchen-projects/${assignment.kitchen_projects?.id}`)}
+                        onClick={() => {
+                          const projectId = assignment.kitchen_projects?.id;
+                          if (projectId) {
+                            navigate(`/kitchen-projects/${projectId}`);
+                          } else {
+                            alert('Unable to navigate to project - project information is missing');
+                          }
+                        }}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
