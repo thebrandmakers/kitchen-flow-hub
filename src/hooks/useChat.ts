@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { subscriptionManager } from '@/lib/subscriptionManager';
 
 interface ChatMessage {
   id: string;
@@ -59,38 +60,34 @@ export const useChat = (projectId: string) => {
     }
   });
 
-  // Set up realtime subscription for chat messages - singleton pattern
+  // Set up realtime subscription for chat messages using global subscription manager
   useEffect(() => {
     if (!projectId) return;
 
-    // Use a unique channel name per project to avoid conflicts
-    const channelName = `chat-${projectId}`;
+    const subscriptionKey = `chat-${projectId}`;
     
-    // Check if channel already exists
-    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
-    if (existingChannel) {
-      return () => {}; // Don't create duplicate subscription
-    }
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `project_id=eq.${projectId}`
-        },
-        () => {
-          // Invalidate queries to refresh messages
-          queryClient.invalidateQueries({ queryKey: ['chat-messages', projectId] });
-        }
-      )
-      .subscribe();
+    const channel = subscriptionManager.getOrCreateSubscription(subscriptionKey, () => {
+      return supabase
+        .channel(subscriptionKey)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `project_id=eq.${projectId}`
+          },
+          () => {
+            // Invalidate queries to refresh messages
+            queryClient.invalidateQueries({ queryKey: ['chat-messages', projectId] });
+          }
+        )
+        .subscribe();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      // Don't remove subscription here - let the manager handle cleanup
+      // when the last component using this subscription unmounts
     };
   }, [projectId, queryClient]);
 

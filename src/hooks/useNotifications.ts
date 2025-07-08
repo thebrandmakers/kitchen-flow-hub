@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { subscriptionManager } from '@/lib/subscriptionManager';
 
 // Push notification function
 const requestPushNotification = async (notification: any) => {
@@ -111,50 +112,46 @@ export const useNotifications = () => {
     }
   });
 
-  // Set up realtime subscription for notifications - singleton pattern
+  // Set up realtime subscription for notifications using global subscription manager
   useEffect(() => {
     if (!user?.id) return;
 
-    // Use a unique channel name per user to avoid conflicts
-    const channelName = `notifications-${user.id}`;
+    const subscriptionKey = `notifications-${user.id}`;
     
-    // Check if channel already exists
-    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
-    if (existingChannel) {
-      return () => {}; // Don't create duplicate subscription
-    }
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          // Play notification sound and vibration
-          playNotificationSound();
-          
-          // Request push notification permission and send notification
-          requestPushNotification(payload.new);
-          
-          // Show toast notification with click handler
-          toast({
-            title: payload.new.title,
-            description: payload.new.message,
-          });
-          
-          // Invalidate queries to refresh notifications
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        }
-      )
-      .subscribe();
+    const channel = subscriptionManager.getOrCreateSubscription(subscriptionKey, () => {
+      return supabase
+        .channel(subscriptionKey)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            // Play notification sound and vibration
+            playNotificationSound();
+            
+            // Request push notification permission and send notification
+            requestPushNotification(payload.new);
+            
+            // Show toast notification with click handler
+            toast({
+              title: payload.new.title,
+              description: payload.new.message,
+            });
+            
+            // Invalidate queries to refresh notifications
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          }
+        )
+        .subscribe();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      // Don't remove subscription here - let the manager handle cleanup
+      // when the last component using this subscription unmounts
     };
   }, [user?.id, queryClient]);
 
