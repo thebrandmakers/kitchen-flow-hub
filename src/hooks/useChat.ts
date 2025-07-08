@@ -59,12 +59,21 @@ export const useChat = (projectId: string) => {
     }
   });
 
-  // Set up realtime subscription for chat messages
+  // Set up realtime subscription for chat messages - singleton pattern
   useEffect(() => {
     if (!projectId) return;
 
+    // Use a unique channel name per project to avoid conflicts
+    const channelName = `chat-${projectId}`;
+    
+    // Check if channel already exists
+    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
+    if (existingChannel) {
+      return () => {}; // Don't create duplicate subscription
+    }
+
     const channel = supabase
-      .channel(`chat-${projectId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
