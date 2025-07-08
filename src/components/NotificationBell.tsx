@@ -6,10 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
 const NotificationBell = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const navigate = useNavigate();
 
   const handleMarkAsRead = (notificationId: string) => {
     markAsRead.mutate(notificationId);
@@ -66,7 +68,7 @@ const NotificationBell = () => {
                      if (!notification.read) handleMarkAsRead(notification.id);
                      // Navigate to project if project_id exists
                      if (notification.project_id) {
-                       window.location.href = `/kitchen-projects/${notification.project_id}`;
+                       navigate(`/kitchen-projects/${notification.project_id}`);
                      }
                    }}
                  >
