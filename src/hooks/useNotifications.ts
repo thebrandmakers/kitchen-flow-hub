@@ -111,12 +111,21 @@ export const useNotifications = () => {
     }
   });
 
-  // Set up realtime subscription for notifications
+  // Set up realtime subscription for notifications - singleton pattern
   useEffect(() => {
     if (!user?.id) return;
 
+    // Use a unique channel name per user to avoid conflicts
+    const channelName = `notifications-${user.id}`;
+    
+    // Check if channel already exists
+    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
+    if (existingChannel) {
+      return () => {}; // Don't create duplicate subscription
+    }
+
     const channel = supabase
-      .channel('notifications')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
