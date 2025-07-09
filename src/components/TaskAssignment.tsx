@@ -44,24 +44,44 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({
   });
 
   const handleAssignment = async () => {
-    if (!selectedUser || !user) return;
+    console.log('🚀 Assignment button clicked');
+    console.log('📝 Current state:', { selectedUser, projectId, phaseId, notes, user: user?.id });
+
+    if (!selectedUser || !user) {
+      console.log('❌ Missing required data:', { selectedUser, userId: user?.id });
+      toast({
+        title: "Error",
+        description: "Please select a team member to assign",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setIsAssigning(true);
+    console.log('📤 Starting assignment process...');
+    
     try {
+      console.log('📝 Updating phase assignment...');
       // Update the phase assignment
-      const { error: phaseError } = await supabase
+      const { data: phaseData, error: phaseError } = await supabase
         .from('kitchen_project_phases')
         .update({
           assigned_to: selectedUser,
           assigned_by: user.id,
           assigned_at: new Date().toISOString()
         })
-        .eq('id', phaseId);
+        .eq('id', phaseId)
+        .select();
 
-      if (phaseError) throw phaseError;
+      console.log('📊 Phase update result:', { phaseData, phaseError });
+      if (phaseError) {
+        console.error('❌ Phase update error:', phaseError);
+        throw phaseError;
+      }
 
+      console.log('📝 Creating assignment record...');
       // Create assignment record
-      const { error: assignmentError } = await supabase
+      const { data: assignmentData, error: assignmentError } = await supabase
         .from('kitchen_project_assignments')
         .insert({
           project_id: projectId,
@@ -70,10 +90,16 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({
           assigned_by: user.id,
           notes: notes || null,
           assigned_at: new Date().toISOString()
-        });
+        })
+        .select();
 
-      if (assignmentError) throw assignmentError;
+      console.log('📊 Assignment record result:', { assignmentData, assignmentError });
+      if (assignmentError) {
+        console.error('❌ Assignment record error:', assignmentError);
+        throw assignmentError;
+      }
 
+      console.log('✅ Assignment completed successfully');
       toast({
         title: "Success",
         description: "Phase assigned successfully",
@@ -83,14 +109,15 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({
       setNotes('');
       onAssignmentChange?.();
     } catch (error) {
-      console.error('Assignment error:', error);
+      console.error('💥 Assignment error:', error);
       toast({
         title: "Error",
-        description: "Failed to assign phase",
+        description: `Failed to assign phase: ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
       setIsAssigning(false);
+      console.log('🏁 Assignment process completed');
     }
   };
 
