@@ -147,7 +147,7 @@ const Team = () => {
                         </div>
                         
                         <p className="text-xs text-gray-500">
-                          Registered {format(new Date(profile.created_at), 'MMM dd, yyyy')}
+                          Registered {profile.created_at ? format(new Date(profile.created_at), 'MMM dd, yyyy') : 'N/A'}
                         </p>
                       </div>
                     </CardContent>
@@ -272,7 +272,7 @@ const Team = () => {
                     )}
                     
                     <p className="text-xs text-gray-500">
-                      Joined {format(new Date(member.created_at), 'MMM dd, yyyy')}
+                      Joined {member.created_at ? format(new Date(member.created_at), 'MMM dd, yyyy') : 'N/A'}
                     </p>
 
                     {canManageTeam && (
