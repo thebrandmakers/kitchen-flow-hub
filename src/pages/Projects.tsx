@@ -13,14 +13,11 @@ const Projects = () => {
   const navigate = useNavigate();
 
   const { data: projects, isLoading } = useQuery({
-    queryKey: ['kitchen-projects'],
+    queryKey: ['projects'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('kitchen_projects')
-        .select(`
-          *,
-          kitchen_clients(name, email)
-        `)
+        .from('projects')
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -28,21 +25,19 @@ const Projects = () => {
     }
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'intake': return 'bg-blue-100 text-blue-800';
-      case 'design': return 'bg-purple-100 text-purple-800';
-      case 'confirmation': return 'bg-yellow-100 text-yellow-800';
-      case 'production_prep': return 'bg-orange-100 text-orange-800';
-      case 'factory': return 'bg-indigo-100 text-indigo-800';
-      case 'installation': return 'bg-green-100 text-green-800';
-      case 'closure': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getStatusColor = (stage: string) => {
+    switch (stage) {
+      case 'quotation': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'design': return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'production': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'installation': return 'bg-green-100 text-green-800 border-green-300';
+      case 'completed': return 'bg-gray-100 text-gray-800 border-gray-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
-  const formatStatus = (status: string) => {
-    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const formatStatus = (stage: string) => {
+    return stage.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   if (isLoading) {
@@ -68,13 +63,13 @@ const Projects = () => {
               </Button>
               <Building2 className="h-8 w-8 text-blue-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Kitchen Projects</h1>
-                <p className="text-sm text-gray-500">Manage your modular kitchen projects</p>
+                <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+                <p className="text-sm text-muted-foreground">Manage your projects</p>
               </div>
             </div>
-            <Button onClick={() => navigate('/kitchen-projects/new')}>
+            <Button onClick={() => navigate('/projects/new')}>
               <Plus className="h-4 w-4 mr-2" />
-              New Kitchen Project
+              New Project
             </Button>
           </div>
         </div>
@@ -89,42 +84,34 @@ const Projects = () => {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <CardTitle className="text-lg flex items-center">
-                        <ChefHat className="h-5 w-5 mr-2 text-orange-600" />
-                        {project.project_reference}
+                        <Building2 className="h-5 w-5 mr-2 text-primary" />
+                        {project.name}
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        {project.kitchen_clients?.name || 'Unknown Client'}
+                        {project.description || 'No description'}
                       </CardDescription>
                     </div>
-                    <Badge className={getStatusColor(project.status || 'intake')}>
-                      {formatStatus(project.status || 'intake')}
+                    <Badge className={getStatusColor(project.stage || 'quotation')}>
+                      {formatStatus(project.stage || 'quotation')}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Shape:</span>
-                      <span className="font-medium">{project.kitchen_shape}</span>
+                      <span className="text-muted-foreground">Stage:</span>
+                      <span className="font-medium">{formatStatus(project.stage || 'quotation')}</span>
                     </div>
                     
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Budget:</span>
+                      <span className="text-muted-foreground">Budget:</span>
                       <span className="font-medium">
-                        {project.budget_bracket.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {project.budget ? `$${Number(project.budget).toLocaleString()}` : 'Not set'}
                       </span>
                     </div>
                     
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Materials:</span>
-                      <span className="font-medium text-right">
-                        {project.materials?.slice(0, 2).join(', ')}
-                        {project.materials?.length > 2 && ` +${project.materials.length - 2} more`}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Created:</span>
+                      <span className="text-muted-foreground">Created:</span>
                       <span className="font-medium">
                         {format(new Date(project.created_at), 'MMM dd, yyyy')}
                       </span>
@@ -148,12 +135,12 @@ const Projects = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <ChefHat className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Kitchen Projects Found</h3>
-            <p className="text-gray-500 mb-6">Get started by creating your first modular kitchen project.</p>
-            <Button onClick={() => navigate('/kitchen-projects/new')}>
+            <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No Projects Found</h3>
+            <p className="text-muted-foreground mb-6">Get started by creating your first project.</p>
+            <Button onClick={() => navigate('/projects/new')}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Kitchen Project
+              Create Project
             </Button>
           </div>
         )}

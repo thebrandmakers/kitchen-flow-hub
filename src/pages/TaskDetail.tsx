@@ -1,81 +1,33 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { useTask, useUpdateTaskStatus } from '@/hooks/useProjectsAndTasks';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Calendar, User, AlertCircle, CheckCircle2, Clock, Play } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Calendar, User, AlertCircle, CheckCircle2, Clock, Play, Building2 } from 'lucide-react';
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const { userRole } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const { data: task, isLoading } = useQuery({
-    queryKey: ['task-detail', id],
-    queryFn: async () => {
-      if (!id) throw new Error('Task ID is required');
-      
-      const { data, error } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          projects(name),
-          profiles!tasks_assigned_to_fkey(full_name, email)
-        `)
-        .eq('id', id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id
-  });
+  const { data: task, isLoading, error } = useTask(id || '');
+  const updateTaskStatus = useUpdateTaskStatus();
 
-  const updateTaskMutation = useMutation({
-    mutationFn: async (newStatus: 'todo' | 'in_progress' | 'done') => {
-      if (!id) throw new Error('Task ID is required');
-      
-      const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['task-detail', id] });
-      toast({
-        title: "Success",
-        description: "Task status updated successfully",
-      });
-      setIsUpdating(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive"
-      });
-      setIsUpdating(false);
-    }
-  });
+  const canUpdateTask = userRole === 'owner' || userRole === 'designer' || userRole === 'manager';
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'todo': return 'bg-gray-100 text-gray-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'done': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'todo': return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'done': return 'bg-green-100 text-green-800 border-green-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
@@ -85,14 +37,6 @@ const TaskDetail = () => {
       case 'in_progress': return <Play className="h-4 w-4" />;
       case 'done': return <CheckCircle2 className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
-    }
-  };
-
-  const getNextStatus = (currentStatus: string) => {
-    switch (currentStatus) {
-      case 'todo': return 'in_progress';
-      case 'in_progress': return 'done';
-      default: return currentStatus;
     }
   };
 
@@ -106,29 +50,62 @@ const TaskDetail = () => {
   };
 
   const handleStatusUpdate = (newStatus: string) => {
+    if (!id || !canUpdateTask) return;
     if (newStatus === 'todo' || newStatus === 'in_progress' || newStatus === 'done') {
       setIsUpdating(true);
-      updateTaskMutation.mutate(newStatus);
+      updateTaskStatus.mutate(
+        { id, status: newStatus },
+        {
+          onSettled: () => setIsUpdating(false)
+        }
+      );
+    }
+  };
+
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'todo': return 'in_progress';
+      case 'in_progress': return 'done';
+      default: return currentStatus;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading task details...</p>
+      <div className="min-h-screen bg-background">
+        <div className="bg-card shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center py-4">
+              <Button variant="ghost" onClick={() => navigate('/tasks')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Tasks
+              </Button>
+              <Skeleton className="h-8 w-48 ml-4" />
+            </div>
+          </div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <Skeleton className="h-64 w-full" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!task) {
+  if (error || !task) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
+          <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-foreground mb-2">Task Not Found</h2>
-          <p className="text-muted-foreground mb-4">The task you're looking for doesn't exist.</p>
+          <p className="text-muted-foreground mb-4">The task you're looking for doesn't exist or you don't have access to it.</p>
           <Button onClick={() => navigate('/tasks')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tasks
@@ -251,23 +228,27 @@ const TaskDetail = () => {
 
                 <div>
                   <p className="text-sm font-medium text-foreground mb-2">Change Status</p>
-                  <Select
-                    value={task.status}
-                    onValueChange={handleStatusUpdate}
-                    disabled={isUpdating}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todo">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="done">Done</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {canUpdateTask ? (
+                    <Select
+                      value={task.status}
+                      onValueChange={handleStatusUpdate}
+                      disabled={isUpdating}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todo">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">You don't have permission to update task status</p>
+                  )}
                 </div>
 
-                {task.status !== 'done' && (
+                {task.status !== 'done' && canUpdateTask && (
                   <Button 
                     className="w-full" 
                     onClick={() => handleStatusUpdate(getNextStatus(task.status))}

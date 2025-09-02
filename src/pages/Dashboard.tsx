@@ -16,15 +16,15 @@ const Dashboard = () => {
   const { user, userRole, signOut } = useAuth();
 
   const { data: projects, isLoading: isProjectsLoading } = useQuery({
-    queryKey: ['kitchen-projects-dashboard'],
+    queryKey: ['projects-dashboard'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('kitchen_projects')
+        .from('projects')
         .select('*')
         .limit(5);
 
       if (error) {
-        console.error('Error fetching kitchen projects:', error);
+        console.error('Error fetching projects:', error);
         return [];
       }
       return data;
@@ -35,7 +35,7 @@ const Dashboard = () => {
     queryKey: ['tasks-dashboard'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('kitchen_project_tasks')
+        .from('tasks')
         .select('*')
         .limit(5);
 
@@ -54,14 +54,14 @@ const Dashboard = () => {
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const [projectsResult, tasksResult, recentActivityResult] = await Promise.all([
-        supabase.from('kitchen_projects').select('id, status, current_phase').limit(10),
-        supabase.from('kitchen_project_tasks').select('id, status').limit(10),
-        supabase.from('kitchen_projects').select('id, project_reference, created_at, status').order('created_at', { ascending: false }).limit(5)
+        supabase.from('projects').select('id, stage, name, created_at').limit(10),
+        supabase.from('tasks').select('id, status').limit(10),
+        supabase.from('projects').select('id, name, created_at, stage').order('created_at', { ascending: false }).limit(5)
       ]);
 
       const totalProjects = projectsResult.data?.length || 0;
-      const activeProjects = projectsResult.data?.filter(p => p.status !== 'closure').length || 0;
-      const completedProjects = projectsResult.data?.filter(p => p.status === 'closure').length || 0;
+      const activeProjects = projectsResult.data?.filter(p => p.stage === 'quotation' || p.stage === 'design' || p.stage === 'factory').length || 0;
+      const completedProjects = projectsResult.data?.filter(p => p.stage === 'site').length || 0;
       
       const totalTasks = tasksResult.data?.length || 0;
       const completedTasks = tasksResult.data?.filter(t => t.status === 'done').length || 0;
@@ -130,7 +130,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{dashboardStats?.totalProjects || 0}</div>
-              <p className="text-xs text-muted-foreground">Kitchen projects managed</p>
+              <p className="text-xs text-muted-foreground">Projects managed</p>
             </CardContent>
           </Card>
 
@@ -351,7 +351,7 @@ const Dashboard = () => {
                 <Calendar className="h-5 w-5 mr-2" />
                 Recent Activity
               </CardTitle>
-              <CardDescription>Latest kitchen project updates</CardDescription>
+              <CardDescription>Latest project updates</CardDescription>
             </CardHeader>
             <CardContent>
               {dashboardStats?.recentActivity && dashboardStats.recentActivity.length > 0 ? (
@@ -360,12 +360,12 @@ const Dashboard = () => {
                     <div key={project.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <ChefHat className="h-5 w-5 text-orange-600" />
-                        <div>
-                          <p className="font-medium">{project.project_reference}</p>
-                          <p className="text-sm text-gray-500">
-                            Status: {project.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </p>
-                        </div>
+                         <div>
+                           <p className="font-medium">{project.name}</p>
+                           <p className="text-sm text-gray-500">
+                             Stage: {project.stage?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                           </p>
+                         </div>
                       </div>
                       <Button 
                         variant="ghost" 

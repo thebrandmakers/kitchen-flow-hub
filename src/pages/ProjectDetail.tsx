@@ -1,58 +1,51 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { useProject } from '@/hooks/useProjectsAndTasks';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Calendar, FileText, Users, CheckCircle, Clock, AlertCircle, Download } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Calendar, FileText, Users, CheckCircle, Clock, AlertCircle, Download, Building2 } from 'lucide-react';
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userRole } = useAuth();
 
-  const { data: project, isLoading } = useQuery({
-    queryKey: ['project-detail', id],
-    queryFn: async () => {
-      if (!id) throw new Error('Project ID is required');
-      
-      const { data, error } = await supabase
-        .from('projects')
-        .select(`
-          *,
-          tasks(*),
-          files(*),
-          reports(*)
-        `)
-        .eq('id', id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id
-  });
+  const { data: project, isLoading, error } = useProject(id || '');
 
   const getStageColor = (stage: string) => {
     switch (stage) {
-      case 'quotation': return 'bg-blue-100 text-blue-800';
-      case 'design': return 'bg-purple-100 text-purple-800';
-      case 'production': return 'bg-orange-100 text-orange-800';
-      case 'installation': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'quotation': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'design': return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'production': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'installation': return 'bg-green-100 text-green-800 border-green-300';
+      case 'completed': return 'bg-gray-100 text-gray-800 border-gray-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
   const getTaskStatusColor = (status: string) => {
     switch (status) {
-      case 'todo': return 'bg-gray-100 text-gray-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'done': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'todo': return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'done': return 'bg-green-100 text-green-800 border-green-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const getStageProgress = (stage: string) => {
+    switch (stage) {
+      case 'quotation': return 10;
+      case 'design': return 30;
+      case 'production': return 60;
+      case 'installation': return 85;
+      case 'completed': return 100;
+      default: return 0;
     }
   };
 
@@ -64,21 +57,42 @@ const ProjectDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading project details...</p>
+      <div className="min-h-screen bg-background">
+        <div className="bg-card shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center py-4">
+              <Button variant="ghost" onClick={() => navigate('/projects')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Projects
+              </Button>
+              <Skeleton className="h-8 w-48 ml-4" />
+            </div>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-48 w-full" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!project) {
+  if (error || !project) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
+          <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-foreground mb-2">Project Not Found</h2>
-          <p className="text-muted-foreground mb-4">The project you're looking for doesn't exist.</p>
+          <p className="text-muted-foreground mb-4">The project you're looking for doesn't exist or you don't have access to it.</p>
           <Button onClick={() => navigate('/projects')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Projects
@@ -118,31 +132,32 @@ const ProjectDetail = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Project Overview</CardTitle>
+                <CardDescription>Detailed information about this project</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <h3 className="font-medium text-foreground mb-2">Description</h3>
-                  <p className="text-muted-foreground">{project.description || 'No description provided'}</p>
+                  <p className="text-muted-foreground">{project.description || 'No description provided for this project.'}</p>
                 </div>
                 
                 <Separator />
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Start Date</p>
                     <p className="font-medium">
-                      {project.start_date ? format(new Date(project.start_date), 'MMM dd, yyyy') : 'Not set'}
+                      {project.start_date ? format(new Date(project.start_date), 'EEEE, MMMM dd, yyyy') : 'Not set'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">End Date</p>
                     <p className="font-medium">
-                      {project.end_date ? format(new Date(project.end_date), 'MMM dd, yyyy') : 'Not set'}
+                      {project.end_date ? format(new Date(project.end_date), 'EEEE, MMMM dd, yyyy') : 'Not set'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Budget</p>
-                    <p className="font-medium">{project.budget ? `$${project.budget.toLocaleString()}` : 'Not set'}</p>
+                    <p className="font-medium">{project.budget ? `$${Number(project.budget).toLocaleString()}` : 'Not set'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Current Stage</p>
