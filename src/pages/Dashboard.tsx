@@ -260,7 +260,7 @@ const Dashboard = () => {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => navigate(`/kitchen-projects/${project.id}`)}
+                          onClick={() => navigate(`/projects/${project.id}`)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
@@ -370,7 +370,7 @@ const Dashboard = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => navigate(`/kitchen-projects/${project.id}`)}
+                        onClick={() => navigate(`/projects/${project.id}`)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View

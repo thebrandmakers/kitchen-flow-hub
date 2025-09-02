@@ -18,6 +18,8 @@ import Team from "./pages/Team";
 import KitchenProjects from "./pages/KitchenProjects";
 import NewKitchenProject from "./pages/NewKitchenProject";
 import KitchenProjectDetail from "./pages/KitchenProjectDetail";
+import ProjectDetail from "./pages/ProjectDetail";
+import TaskDetail from "./pages/TaskDetail";
 import AdminRegister from "./pages/AdminRegister";
 import ClientManagement from "./pages/ClientManagement";
 import NotFound from "./pages/NotFound";
@@ -59,6 +61,14 @@ const App = () => (
               } 
             />
             <Route 
+              path="/projects/:id" 
+              element={
+                <ProtectedRoute>
+                  <ProjectDetail />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/kitchen-projects" 
               element={
                 <ProtectedRoute>
@@ -87,6 +97,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Tasks />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tasks/:id" 
+              element={
+                <ProtectedRoute>
+                  <TaskDetail />
                 </ProtectedRoute>
               } 
             />
