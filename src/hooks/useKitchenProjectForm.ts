@@ -128,7 +128,7 @@ export const useKitchenProjectForm = () => {
             email: formData.clientEmail,
             phone: formData.clientPhone,
             address: formData.clientAddress,
-            client_id: `CLIENT-${Date.now()}`
+            client_reference: `CLIENT-${Date.now()}`
           })
           .select('id, name, email, phone, address')
           .single();
