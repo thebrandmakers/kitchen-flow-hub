@@ -1,54 +1,21 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, ChefHat, Users, ClipboardList, BarChart3, Plus, Eye, TrendingUp, Calendar, Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChefHat, ClipboardList, BarChart3, Plus, Eye, TrendingUp, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import NotificationBell from '@/components/NotificationBell';
 import { useAssignedProjects } from '@/hooks/useAssignedProjects';
 import { useClientProjects } from '@/hooks/useClientProjects';
+import { hasPermission, roleConfig, UserRole } from '@/config/rolePermissions';
+import AppLayout from '@/components/AppLayout';
+import RoleGuard from '@/components/RoleGuard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, userRole, signOut } = useAuth();
-
-  const { data: projects, isLoading: isProjectsLoading } = useQuery({
-    queryKey: ['projects-dashboard'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .limit(5);
-
-      if (error) {
-        console.error('Error fetching projects:', error);
-        return [];
-      }
-      return data;
-    },
-  });
-
-  const { data: tasks, isLoading: isTasksLoading } = useQuery({
-    queryKey: ['tasks-dashboard'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .limit(5);
-
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        return [];
-      }
-      return data;
-    },
-  });
-
-  const { data: assignedProjects } = useAssignedProjects();
-  const { data: clientProjects } = useClientProjects();
+  const { user, userRole } = useAuth();
 
   const { data: dashboardStats } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -79,273 +46,226 @@ const Dashboard = () => {
     }
   });
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'owner': return 'bg-purple-100 text-purple-800';
-      case 'manager': return 'bg-indigo-100 text-indigo-800';
-      case 'designer': return 'bg-blue-100 text-blue-800';
-      case 'factory': return 'bg-orange-100 text-orange-800';
-      case 'installer': return 'bg-green-100 text-green-800';
-      case 'sales': return 'bg-pink-100 text-pink-800';
-      case 'worker': return 'bg-yellow-100 text-yellow-800';
-      case 'client': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const { data: assignedProjects } = useAssignedProjects();
+  const { data: clientProjects } = useClientProjects();
+
+  const roleInfo = userRole ? roleConfig[userRole as UserRole] : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <Building2 className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-sm text-gray-500">Welcome back, {user?.email}</p>
-              </div>
+    <AppLayout title="Dashboard">
+      <div className="p-6 lg:p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Welcome back!</h1>
+              <p className="text-muted-foreground mt-1">{user?.email}</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <NotificationBell />
-              {userRole && (
-                <Badge className={getRoleColor(userRole)}>
-                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                </Badge>
-              )}
-              <Button variant="outline" onClick={signOut}>
-                Logout
-              </Button>
-            </div>
+            {roleInfo && (
+              <Badge className={`${roleInfo.bgColor} ${roleInfo.color}`}>
+                {roleInfo.label}
+              </Badge>
+            )}
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
-              <ChefHat className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{dashboardStats?.totalProjects || 0}</div>
-              <p className="text-xs text-muted-foreground">Projects managed</p>
-            </CardContent>
-          </Card>
+        {/* Stats Grid - Show for management roles */}
+        <RoleGuard allowedRoles={['owner', 'manager', 'designer']}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+                <ChefHat className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardStats?.totalProjects || 0}</div>
+                <p className="text-xs text-muted-foreground">Projects managed</p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{dashboardStats?.activeProjects || 0}</div>
-              <p className="text-xs text-muted-foreground">Currently in progress</p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{dashboardStats?.activeProjects || 0}</div>
+                <p className="text-xs text-muted-foreground">Currently in progress</p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tasks</CardTitle>
-              <ClipboardList className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{dashboardStats?.totalTasks || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                {dashboardStats?.completedTasks || 0} completed, {dashboardStats?.pendingTasks || 0} pending
-              </p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tasks</CardTitle>
+                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardStats?.totalTasks || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  {dashboardStats?.completedTasks || 0} completed, {dashboardStats?.pendingTasks || 0} pending
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {dashboardStats?.totalProjects ? 
-                  Math.round((dashboardStats.completedProjects / dashboardStats.totalProjects) * 100) : 0}%
-              </div>
-              <p className="text-xs text-muted-foreground">Projects completed</p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {dashboardStats?.totalProjects ? 
+                    Math.round((dashboardStats.completedProjects / dashboardStats.totalProjects) * 100) : 0}%
+                </div>
+                <p className="text-xs text-muted-foreground">Projects completed</p>
+              </CardContent>
+            </Card>
+          </div>
+        </RoleGuard>
 
-        {/* Quick Actions - Role Based */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {(userRole === 'owner' || userRole === 'designer' || userRole === 'manager') && (
-            <Button 
-              onClick={() => navigate('/kitchen-projects/new')} 
-              className="h-20 flex-col space-y-2"
-            >
-              <Plus className="h-6 w-6" />
-              New Kitchen Project
-            </Button>
-          )}
-          
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/kitchen-projects')} 
-            className="h-20 flex-col space-y-2"
-          >
-            <ChefHat className="h-6 w-6" />
-            View Projects
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/my-tasks')} 
-            className="h-20 flex-col space-y-2"
-          >
-            <ClipboardList className="h-6 w-6" />
-            My Tasks
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/team')} 
-            className="h-20 flex-col space-y-2"
-          >
-            <Users className="h-6 w-6" />
-            Team Management
-          </Button>
-          
-          {(userRole === 'owner' || userRole === 'designer' || userRole === 'manager') && (
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <RoleGuard allowedRoles={['owner', 'designer', 'manager', 'sales']}>
+              <Button 
+                onClick={() => navigate('/kitchen-projects/new')} 
+                className="h-20 flex-col space-y-2"
+              >
+                <Plus className="h-6 w-6" />
+                <span>New Project</span>
+              </Button>
+            </RoleGuard>
+            
             <Button 
               variant="outline" 
-              onClick={() => navigate('/reports')} 
+              onClick={() => navigate('/kitchen-projects')} 
               className="h-20 flex-col space-y-2"
             >
-              <BarChart3 className="h-6 w-6" />
-              Reports
+              <ChefHat className="h-6 w-6" />
+              <span>View Projects</span>
             </Button>
-          )}
-          
-          {(userRole === 'owner' || userRole === 'manager') && (
+            
             <Button 
               variant="outline" 
-              onClick={() => navigate('/clients')} 
+              onClick={() => navigate('/my-tasks')} 
               className="h-20 flex-col space-y-2"
             >
-              <Users className="h-6 w-6" />
-              Client Management
+              <ClipboardList className="h-6 w-6" />
+              <span>My Tasks</span>
             </Button>
-          )}
+            
+            <RoleGuard allowedRoles={['owner', 'designer', 'manager']}>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/reports')} 
+                className="h-20 flex-col space-y-2"
+              >
+                <BarChart3 className="h-6 w-6" />
+                <span>Reports</span>
+              </Button>
+            </RoleGuard>
+          </div>
         </div>
 
-        {/* Role-Specific Content */}
-        {userRole === 'client' && clientProjects && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ChefHat className="h-5 w-5 mr-2" />
-                My Projects & Assigned Team
-              </CardTitle>
-              <CardDescription>Your kitchen projects and assigned team members</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {clientProjects.length > 0 ? (
-                <div className="space-y-4">
-                  {clientProjects.map((project) => (
-                    <div key={project.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h3 className="font-medium">{project.project_reference}</h3>
-                          <p className="text-sm text-gray-500">
-                            Status: {project.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </p>
+        {/* Client Projects */}
+        <RoleGuard allowedRoles={['client']}>
+          {clientProjects && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ChefHat className="h-5 w-5 mr-2" />
+                  My Projects & Assigned Team
+                </CardTitle>
+                <CardDescription>Your kitchen projects and assigned team members</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {clientProjects.length > 0 ? (
+                  <div className="space-y-4">
+                    {clientProjects.map((project) => (
+                      <div key={project.id} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h3 className="font-medium">{project.project_reference}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Status: {project.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => navigate(`/kitchen-projects/${project.id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">No projects assigned</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </RoleGuard>
+
+        {/* Worker Assignments */}
+        <RoleGuard allowedRoles={['worker', 'factory', 'installer']}>
+          {assignedProjects && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ClipboardList className="h-5 w-5 mr-2" />
+                  My Assigned Projects
+                </CardTitle>
+                <CardDescription>Projects and phases assigned to you</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {assignedProjects.length > 0 ? (
+                  <div className="space-y-3">
+                    {assignedProjects.map((assignment) => (
+                      <div key={assignment.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <ChefHat className="h-5 w-5 text-orange-600" />
+                          <div>
+                            <p className="font-medium">{assignment.kitchen_projects?.project_reference}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Phase {assignment.phase_number}: {assignment.phase_name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Client: {assignment.kitchen_projects?.kitchen_clients?.name}
+                            </p>
+                          </div>
                         </div>
                         <Button 
-                          variant="outline" 
+                          variant="ghost" 
                           size="sm"
-                          onClick={() => navigate(`/projects/${project.id}`)}
+                          onClick={() => {
+                            const projectId = assignment.kitchen_projects?.id;
+                            if (projectId) {
+                              navigate(`/kitchen-projects/${projectId}`);
+                            }
+                          }}
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
                       </div>
-                      
-                      {project.kitchen_project_phases && project.kitchen_project_phases.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Assigned Team Members:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {project.kitchen_project_phases
-                              .filter(phase => phase.assigned_to && (phase as any).profile)
-                              .map((phase, index) => (
-                                <div key={index} className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full text-sm">
-                                  <span>{(phase as any).profile?.full_name}</span>
-                                  <span className="text-gray-500">({(phase as any).profile?.role})</span>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">No projects assigned</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">No assignments yet</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </RoleGuard>
 
-        {(userRole === 'worker' || userRole === 'factory' || userRole === 'installer') && assignedProjects && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ClipboardList className="h-5 w-5 mr-2" />
-                My Assigned Projects
-              </CardTitle>
-              <CardDescription>Projects and phases assigned to you</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {assignedProjects.length > 0 ? (
-                <div className="space-y-3">
-                  {assignedProjects.map((assignment) => (
-                    <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <ChefHat className="h-5 w-5 text-orange-600" />
-                        <div>
-                          <p className="font-medium">{assignment.kitchen_projects?.project_reference}</p>
-                          <p className="text-sm text-gray-500">
-                            Phase {assignment.phase_number}: {assignment.phase_name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Client: {assignment.kitchen_projects?.kitchen_clients?.name}
-                          </p>
-                        </div>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          const projectId = assignment.kitchen_projects?.id;
-                          if (projectId) {
-                            navigate(`/kitchen-projects/${projectId}`);
-                          } else {
-                            alert('Unable to navigate to project - project information is missing');
-                          }
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">No assignments yet</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Recent Activity for owners/designers/managers */}
-        {(userRole === 'owner' || userRole === 'designer' || userRole === 'manager') && (
-          <Card>
+        {/* Recent Activity - For management roles */}
+        <RoleGuard allowedRoles={['owner', 'designer', 'manager']}>
+          <Card className="mt-6">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Calendar className="h-5 w-5 mr-2" />
@@ -357,15 +277,15 @@ const Dashboard = () => {
               {dashboardStats?.recentActivity && dashboardStats.recentActivity.length > 0 ? (
                 <div className="space-y-3">
                   {dashboardStats.recentActivity.map((project) => (
-                    <div key={project.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={project.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center space-x-3">
                         <ChefHat className="h-5 w-5 text-orange-600" />
-                         <div>
-                           <p className="font-medium">{project.name}</p>
-                           <p className="text-sm text-gray-500">
-                             Stage: {project.stage?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                           </p>
-                         </div>
+                        <div>
+                          <p className="font-medium">{project.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Stage: {project.stage?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </p>
+                        </div>
                       </div>
                       <Button 
                         variant="ghost" 
@@ -379,13 +299,13 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">No recent activity</p>
+                <p className="text-muted-foreground text-center py-4">No recent activity</p>
               )}
             </CardContent>
           </Card>
-        )}
+        </RoleGuard>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

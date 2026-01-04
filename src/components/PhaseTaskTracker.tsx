@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,31 +39,12 @@ export default function PhaseTaskTracker({ projectId }: PhaseTaskTrackerProps) {
   const [phases, setPhases] = useState<Phase[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>('');
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
   useEffect(() => {
     fetchPhasesAndTasks();
-    fetchUserRole();
   }, [projectId]);
-
-  async function fetchUserRole() {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) throw error;
-      setUserRole(data?.role || '');
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-    }
-  }
 
   async function fetchPhasesAndTasks() {
     try {

@@ -15,11 +15,6 @@ interface IndividualTask {
   created_at: string;
   updated_at: string;
   completed_at?: string;
-  profiles?: {
-    full_name: string;
-    email: string;
-    role: string;
-  };
 }
 
 export const useIndividualTasks = (phaseId?: string) => {
@@ -34,15 +29,12 @@ export const useIndividualTasks = (phaseId?: string) => {
       
       const { data, error } = await supabase
         .from('individual_tasks')
-        .select(`
-          *,
-          profiles!individual_tasks_assigned_to_fkey(full_name, email, role)
-        `)
+        .select('*')
         .eq('phase_id', phaseId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as IndividualTask[];
+      return (data || []) as IndividualTask[];
     },
     enabled: !!phaseId
   });

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,7 +7,7 @@ import { UserPlus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useAssignableMembers } from '@/hooks/useUserRoles';
 
 interface TaskAssignmentProps {
   projectId: string;
@@ -28,20 +27,8 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({
   const [selectedUser, setSelectedUser] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Fetch available team members
-  const { data: teamMembers } = useQuery({
-    queryKey: ['team-members'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role')
-        .in('role', ['designer', 'worker', 'factory', 'installer', 'manager'])
-        .order('full_name');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
+  // Fetch available team members using the new hook
+  const { data: teamMembers } = useAssignableMembers();
 
   const handleAssignment = async () => {
     console.log('🚀 Assignment button clicked');
@@ -108,7 +95,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({
       setSelectedUser('');
       setNotes('');
       onAssignmentChange?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Assignment error:', error);
       toast({
         title: "Error",

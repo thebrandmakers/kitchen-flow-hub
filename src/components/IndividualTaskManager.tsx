@@ -10,8 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash, CheckCircle, Clock, PlayCircle, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIndividualTasks } from '@/hooks/useIndividualTasks';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useAssignableMembers } from '@/hooks/useUserRoles';
 import ImageUpload from '@/components/ImageUpload';
 
 interface IndividualTaskManagerProps {
@@ -25,6 +24,7 @@ const IndividualTaskManager: React.FC<IndividualTaskManagerProps> = ({
 }) => {
   const { user, userRole } = useAuth();
   const { tasks, createTask, updateTaskStatus, deleteTask } = useIndividualTasks(phaseId);
+  const { data: teamMembers } = useAssignableMembers();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState({
     task_title: '',
@@ -32,21 +32,6 @@ const IndividualTaskManager: React.FC<IndividualTaskManagerProps> = ({
     assigned_to: ''
   });
   const [taskImages, setTaskImages] = useState<{ [taskId: string]: string[] }>({});
-
-  // Fetch team members for assignment
-  const { data: teamMembers } = useQuery({
-    queryKey: ['team-members-for-tasks'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role')
-        .in('role', ['designer', 'worker', 'factory', 'installer'])
-        .order('full_name');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
 
   const canManageTasks = userRole === 'owner' || userRole === 'designer' || userRole === 'manager';
 
@@ -88,6 +73,12 @@ const IndividualTaskManager: React.FC<IndividualTaskManagerProps> = ({
       case 'started': return <PlayCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
+  };
+
+  // Get assigned member name from task
+  const getAssignedMemberName = (assignedTo: string) => {
+    const member = teamMembers?.find(m => m.id === assignedTo);
+    return member ? `${member.full_name || member.email} (${member.role})` : 'Unknown';
   };
 
   return (
@@ -191,7 +182,7 @@ const IndividualTaskManager: React.FC<IndividualTaskManagerProps> = ({
                       )}
                       
                       <div className="text-xs text-gray-500">
-                        Assigned to: {task.profiles?.full_name || 'Unknown'} ({task.profiles?.role})
+                        Assigned to: {getAssignedMemberName(task.assigned_to)}
                       </div>
                     </div>
                     

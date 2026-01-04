@@ -1,14 +1,32 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { UserRole } from '@/hooks/useUserRoles';
+
+interface TeamMemberProfile {
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
+  role: UserRole;
+}
+
+interface TeamMemberWithProfile {
+  id: string;
+  user_id: string | null;
+  department: string | null;
+  phone: string | null;
+  status: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  profiles: TeamMemberProfile | null;
+}
 
 export const useTeamMembers = () => {
   const queryClient = useQueryClient();
 
   const { data: teamMembers, isLoading } = useQuery({
     queryKey: ['team-members'],
-    queryFn: async () => {
+    queryFn: async (): Promise<TeamMemberWithProfile[]> => {
       const { data: teamMembersData, error } = await supabase
         .from('team_members')
         .select('*')
@@ -17,18 +35,30 @@ export const useTeamMembers = () => {
       if (error) throw error;
       if (!teamMembersData) return [];
 
-      // Manually fetch profile data for each team member
+      // Manually fetch profile data and role for each team member
       const teamMembersWithProfiles = await Promise.all(
         teamMembersData.map(async (member) => {
           if (!member.user_id) return { ...member, profiles: null };
           
+          // Fetch profile
           const { data: profile } = await supabase
             .from('profiles')
-            .select('full_name, email, role, avatar_url')
+            .select('full_name, email, avatar_url')
             .eq('id', member.user_id)
             .single();
           
-          return { ...member, profiles: profile };
+          // Fetch role using RPC
+          const { data: role } = await supabase.rpc('get_user_role', {
+            _user_id: member.user_id
+          });
+          
+          return { 
+            ...member, 
+            profiles: profile ? {
+              ...profile,
+              role: (role || 'client') as UserRole
+            } : null 
+          };
         })
       );
       
@@ -83,7 +113,7 @@ export const useTeamMembers = () => {
         description: "Team member added successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
